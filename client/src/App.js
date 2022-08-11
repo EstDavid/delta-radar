@@ -1,8 +1,6 @@
 import React  from 'react';
 import Navbar from './components/Navbar';
-import PriceChart from './components/PriceChart';
-import PairsSidebar from './components/PairsSidebar';
-import IndicatorSidebar from './components/IndicatorSidebar';
+import ScanTable from './components/ScanTable';
 
 function App() {
   return (
@@ -10,14 +8,12 @@ function App() {
       <Navbar />
       <div className="container-fluid">
         <div className="row">
-          <div className="col-sm-3">
-            <IndicatorSidebar />
+          <div className="col-sm-1">
           </div>
-          <div className="col-sm-7">
-            <PriceChart />
+          <div className="col-sm-10">
+            <ScanTable />
           </div>
-          <div className="col-sm-2">
-            <PairsSidebar />
+          <div className="col-sm-1">
           </div>
         </div>
       </div>
