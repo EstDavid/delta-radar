@@ -34,20 +34,47 @@ const cloudStorage = new Storage({
 const bucket = cloudStorage.bucket(bucketName);
 
 // DOWNLOAD FILE
-app.get("/get-url/:timeframe/:symbol", (req, res) => {
-    const file = bucket.file(`${req.params.timeframe}/${req.params.symbol}.json`);
+app.get("/get-file/:blockchain/:year/:month/:day/:endPath", (req, res, next) => {
+  const filename = `${req.params.blockchain}/${req.params.year}${req.params.month}/${req.params.day}/${req.params.endPath.replace('-','/')}`;
 
-    // console.log(file)
+  console.log(`Fetching file ${filename}`);
 
-    file.download((error, data) => {
-        res.status(200).send(data)
+  const file = bucket.file(filename);
+
+  file.download((error, data) => {
+    // res.set('Content-Type', 'text/html');
+    if(error) {
+      next(error);
+    } else {
+      console.log(`${filename} downloaded`);
+      res.status(200).send(data);
+    }
+  });
+});
+
+// DOWNLOAD ALL FILENAMES INSIDE A GIVEN BLOCKCHAIN FOLDER
+app.get("/get-files/:blockchain/", (req, res) => {
+  const options = {
+    prefix: `${req.params.blockchain}/`,
+  };
+
+  bucket.getFiles(options).then((response) => {
+    const [files] = response;
+    const fileNames = [];
+
+    files.map((file) => {
+      fileNames.push(file.name);
     });
+
+    console.log(`File names from ${req.params.blockchain} blockchain downloaded`)
+    res.status(200).send(fileNames);      
+  })
 });
 
 // DOWNLOAD ALL FILENAMES AND CLASSIFY PAIRS ACCORDING TO QUOTE TOKEN
-app.get("/get-symbols/:timeframe/", (req, res) => {
+app.get("/get-scans/:blockchain/:year/:month/:day", (req, res) => {
   const options = {
-    prefix: `${req.params.timeframe}/`,
+    prefix: `${req.params.blockchain}/${req.params.year}${req.params.month}/${req.params.day}/SCANS/`,
   };
 
   bucket.getFiles(options).then((response) => {
@@ -59,11 +86,12 @@ app.get("/get-symbols/:timeframe/", (req, res) => {
       // e.g.: /30 seconds/WETHUSDC.json
       // The string.substring() function is used to get the symbol out of the file name
       let startCharacter = options.prefix.length;
-      let endCharacter = file.name.length - '.json'.length;
-      let symbol = file.name.substring(startCharacter, endCharacter);
+      // let endCharacter = file.name.length - '.json'.length;
+      let symbol = file.name.substring(startCharacter);
       fileNames.push(symbol);
     });
 
+    console.log(`File names from ${options.prefix} downloaded`)
     res.status(200).send(fileNames);      
   })
 });
