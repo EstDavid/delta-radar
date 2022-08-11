@@ -5,7 +5,7 @@
 @import "../node_modules/bootstrap/scss/functions";
 
 // 2. Include any default variable overrides here
-$primary: #d63384;
+// $primary: #d63384;
 
 // 3. Include remainder of required Bootstrap stylesheets
 @import "../node_modules/bootstrap/scss/variables";
@@ -23,7 +23,7 @@ $primary: #d63384;
 
 // From https://blog.assistancy.be/blog/bootstrap-5-override-theme-colors-sass
 // First override some or all individual color variables
-$primary: #d63384;
+// $primary: #d63384;
 
 // Then add them to your custom theme-colors map, together with any additional colors you might need
 $theme-colors: (
