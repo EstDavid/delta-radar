@@ -1,15 +1,11 @@
 import {configureStore} from '@reduxjs/toolkit';
-import priceDataReducer from './slices/priceData';
-import pairsListsReducer from './slices/pairsLists';
-import indicatorConfigReducer from './slices/indicatorConfig';
+import scanDataReducer from './slices/scanData';
 import accountsReducer from './slices/accounts';
 import blockchainReducer from './slices/blockchain';
 
 export const store = configureStore({
     reducer: {
-        priceData: priceDataReducer,
-        pairsLists: pairsListsReducer,
-        indicatorConfig: indicatorConfigReducer,
+        scanData: scanDataReducer,
         accounts: accountsReducer,
         blockchain: blockchainReducer
     }
