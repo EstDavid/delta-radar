@@ -9,8 +9,10 @@ const scansFolder = 'SCANS';
 
 export const initialState = {
     loading: true,
-    latestDataLoading: true,
     hasErrors: false,
+    aggregateDataLoading: true,
+    latestDataLoading: true,
+    aggregateDataHasErrors: false,
     latestDataHasErrors: false,
     blockchainSelection: 'ETH',
     tokenData: {
@@ -20,6 +22,7 @@ export const initialState = {
     folderDatesObject: {},
     aggregateData: {},
     latestData: [],
+    combinedData: [],
     aggregateCategoryFolders: {
         deltaPercentage: 'DELTAPERC',
         deltaRefToken: 'DELTAREFTOKEN'
@@ -37,15 +40,17 @@ export const initialState = {
         exchangeSequence: { name: 'Exchange Sequence', index: 8, isNumerical: false },
         optimizedInput: { name: 'Optimized Input', index: 9, isNumerical: false },
         tradeTriggered: { name: 'Trade Triggered', index: 10, isNumerical: false },
-        theoreticalDelta: { name: 'Theor. Delta', index: 11, isNumerical: true },
-        theoreticalDeltaPercentage: { name: 'Theor. Delta %', index: 12, isNumerical: true },
-        theoreticalDeltaRefToken: { name: 'Theor. Delta Ref. Token', index: 13, isNumerical: true },
+        theoreticalDelta: { name: 'Delta', index: 11, isNumerical: true },
+        theoreticalDeltaPercentage: { name: 'Delta %', index: 12, isNumerical: true },
+        theoreticalDeltaRefToken: { name: 'Delta Ref. Token', index: 13, isNumerical: true },
         trueDelta: { name: 'True Delta', index: 14, isNumerical: true },
-        deltaAge: { name: 'Delta Age', index: 15, isNumerical: true }
+        deltaAge: { name: 'Delta Age', index: 15, isNumerical: true },
+        timestamp : { name: 'Timestamp', index: 16, isNumerical: false }
     },
     tableFields: [
-        'date',
-        'time',
+        // 'date',
+        // 'time',
+        'timestamp',
         // 'type',
         'inputQty',
         // 'delta',
@@ -59,33 +64,93 @@ export const initialState = {
         'theoreticalDeltaPercentage',
         'theoreticalDeltaRefToken',
         // 'trueDelta',
-        // 'deltaAge'        
-    ], sortedFieldsDescending: {}
+        // 'deltaAge',   
+    ],
+    sortingEnabled: true,
+    sortedFieldsDescending: {},
+    filterableFields: [
+        'timestamp',
+        'inputQty',
+        'tokenSequence',
+        'exchangeSequence',
+        'theoreticalDeltaPercentage',
+        'theoreticalDeltaRefToken',
+    ],
+    filteredFields: {
+    },
+    numericalOperators: ['=', '>', '>=', '<', '<=']
 }
 
 export const scanDataSlice = createSlice({
-    name: 'priceData',
+    name: 'scanData',
     initialState,
     reducers: {
         getScanData: (state) => {
             state.loading = true;
         },
-        getAggregateDataSuccess: (state, {payload}) => {
-            state.aggregateData = payload;
-            state.loading = false;
-            state.hasErrors = false;
+        folderDatesDownloaded: (state, {payload}) => {
+            state.folderDatesObject = payload;
         },
-        getAggregateDataFailure: (state) => {
+        getFolderDatesFailure: (state) => {
             state.loading = false;
             state.hasErrors = true;
         },
+        getAggregateDataSuccess: (state, {payload}) => {
+            for(let key in payload) {
+                const dataAggregate = payload[key];
+                const dateIndex = state.fields.date.index;
+                const timeIndex = state.fields.time.index
+                state.aggregateData[key] = addTimestampToData(dataAggregate, dateIndex, timeIndex);
+            }
+            state.aggregateDataLoading = false;
+            state.aggregateDataHasErrors = false;
+        },
+        getAggregateDataFailure: (state) => {
+            state.aggregateDataLoading = false;
+            state.aggregateDataHasErrors = true;
+        },
         getLatestDataSuccess: (state, {payload}) => {
-            state.latestData = payload;
+            const dateIndex = state.fields.date.index;
+            const timeIndex = state.fields.time.index
+            state.latestData = addTimestampToData(payload, dateIndex, timeIndex);
+
             state.latestDataLoading = false;
             state.latestDataHasErrors = false;
         },
-        folderDatesDownloaded: (state, {payload}) => {
-            state.folderDatesObject = payload;
+        getLatestDataFailure: (state) => {
+            state.latestDataLoading = false;
+            state.latestDataHasErrors = true;
+        },
+        getCombinedDataSuccess: (state, {payload}) => {
+            state.combinedData = payload.latestData;
+
+            let earliestTimestamp = new Date();
+
+            for(let swapSetArray of payload.latestData) {
+                const dateArray = swapSetArray[state.fields.timestamp.index];
+                const timestamp = new Date(...dateArray);
+                if( timestamp < earliestTimestamp) {
+                    earliestTimestamp = timestamp;
+                }
+            }
+
+            const aggregateData = payload.aggregateData[state.defaultCategoryFolder].filter((swapSetArray) => {
+                const dateArray = swapSetArray[state.fields.timestamp.index];
+                const timestamp = new Date(...dateArray);
+                return timestamp < earliestTimestamp;
+            });
+
+            state.combinedData.push(...aggregateData);
+
+            state.loading = false;
+            state.hasErrors = false;
+        },
+        getCombinedDataFailure: (state) => {
+            state.loading = false;
+            state.hasErrors = true;
+        },
+        sortingEnabledSwitched: (state) => {
+            state.sortingEnabled = !state.sortingEnabled;
         },
         sortedFieldChanged: (state, {payload}) => {
             const sortedFieldsKeys = Object.keys(state.sortedFieldsDescending);
@@ -100,10 +165,23 @@ export const scanDataSlice = createSlice({
             }
 
             for(let fieldKey in state.sortedFieldsDescending) {
+                state.combinedData = sortData(state, fieldKey);
+            }
+        },
+        filterChanged: (state, {payload}) => {
+            state.filteredFields[payload.key].value = payload.value;
+        },
+        operatorChanged: (state, {payload}) => {
+            state.filteredFields[payload.key].operator = payload.value;
+        },
+        setFilteredFields: (state) => {
+            for(let fieldKey of state.filterableFields) {
                 const field = state.fields[fieldKey];
-                const descending = state.sortedFieldsDescending[fieldKey];
-                state.aggregateData[state.defaultCategoryFolder] = 
-                sortScanData(state.aggregateData[state.defaultCategoryFolder], field, descending);
+                state.filteredFields[fieldKey] = {};
+                state.filteredFields[fieldKey].value = '';
+                if(field.isNumerical) {
+                    state.filteredFields[fieldKey].operator = state.numericalOperators[0];
+                }
             }
         }
     }
@@ -113,14 +191,26 @@ export const scanDataSlice = createSlice({
 // export slice.actions
 export const {
     getScanData,
+    folderDatesDownloaded,
+    getFolderDatesFailure,
     getAggregateDataSuccess,
     getAggregateDataFailure,
     getLatestDataSuccess,
-    folderDatesDownloaded,
-    sortedFieldChanged
+    getLatestDataFailure,
+    getCombinedDataSuccess,
+    getCombinedDataFailure,
+    sortingEnabledSwitched,
+    sortedFieldChanged,
+    filterChanged,
+    operatorChanged,
+    setFilteredFields
 } = scanDataSlice.actions;
 
-const sortScanData = (scanData, field, descending) => {
+// Helper functions
+const sortData = (state, fieldKey) => {
+    const scanData = state.combinedData;
+    const field = state.fields[fieldKey];
+    const descending = state.sortedFieldsDescending[fieldKey];
     const {isNumerical, index} = field
     const sortStart = new Date();
     const sortedArray = [...scanData];
@@ -129,15 +219,36 @@ const sortScanData = (scanData, field, descending) => {
             if(descending) return parseFloat(b[index]) - parseFloat(a[index]);
             else return parseFloat(a[index]) - parseFloat(b[index]);
         });        
-    } else {
+    } else if(fieldKey === 'timestamp') {
+        sortedArray.sort((a, b) => {
+            const dateA = new Date(...a[index]);
+            const dateB = new Date(...b[index]);
+            if(descending) return dateB - dateA;
+            else return dateA - dateB;
+        }); 
+    }
+    else {
         if(descending) sortedArray.reverse();
         else sortedArray.sort();    
     }
     const sortEnd = new Date();
     console.log(`Data sorting took ${(sortEnd - sortStart) / 1000} seconds`)
     return sortedArray;
-  }
+}
 
+const addTimestampToData = (dataArray, dateIndex, timeIndex) => {
+    return dataArray.map((swapSetArray) => {
+        const dateArray = swapSetArray[dateIndex].split('/');
+        const timeArray = swapSetArray[timeIndex].split(':');
+
+        dateArray[1] -= 1;
+
+        swapSetArray[dateIndex] = '';
+        swapSetArray[timeIndex] = '';
+        swapSetArray.push([...dateArray, ...timeArray, 0]);
+        return swapSetArray;
+    })
+}
 // export selector
 export const scanDataSelector = (state) => state.scanData;
 
@@ -145,8 +256,11 @@ export const scanDataSelector = (state) => state.scanData;
 export default scanDataSlice.reducer;
 
 // export asynchronous thunk action
+
 export function fetchScans(blockchainSelection) {
     return async (dispatch) => {
+        dispatch(setFilteredFields());
+
         dispatch(getScanData());
 
         try {
@@ -178,87 +292,131 @@ export function fetchScans(blockchainSelection) {
             return folderDatesObject;
 
         } catch(error) {
-            dispatch(getAggregateDataFailure())
+            dispatch(getFolderDatesFailure());
         }
     }
 }
 
-export function fetchAggregateData(blockchainSelection, folderDatesObject, aggregateCategoryFolders) {
+export function fetchData(blockchainSelection, folderDatesObject, aggregateCategoryFolders) {
     return async (dispatch) => {
-        const aggregateData = {};
 
-        if(Object.keys(folderDatesObject).length > 0) {
-            for(let yearString in folderDatesObject) {
-                for(let aggregateCategoryFolder in aggregateCategoryFolders) {
-                    const data = [];
-    
-                    const categoryFolderName = aggregateCategoryFolders[aggregateCategoryFolder];
-                    console.log(`Fetching aggregated data for year ${yearString} and ${categoryFolderName} category`);
-                    const endPath = `${categoryFolderName}-COMPOSED`
-                    try {
-                        const fileResponse = await fetch(`get-file/${blockchainSelection}/${yearString}/${aggregateDataFolder}/${aggregateDataFolder}/${endPath}`);
-    
-                        const contentText = await fileResponse.text();
-                        const contentArray = contentText.split("\n");
-                
-                        for(let block of contentArray) {
-                            if(block === "") continue;
-                            const array = JSON.parse(block);
-                            data.push(...array);
-                        }
-        
-                        aggregateData[aggregateCategoryFolder] = data;
-            
-                    } catch(error) {
-                        // console.log(error);
-                    }
-                }
+        try {
+            let aggregateData, latestData;
+
+            try{
+                aggregateData = await fetchAggregateData(blockchainSelection, folderDatesObject, aggregateCategoryFolders);
+                if(aggregateData !== undefined) dispatch(getAggregateDataSuccess(aggregateData));
+            } catch {
+                dispatch(getAggregateDataFailure());
+                throw('Aggregate data failure')
             }
-    
-            if(Object.keys(aggregateData).length > 0) dispatch(getAggregateDataSuccess(aggregateData));
-        }
-    }
-}
 
-export function fetchLatestScanData(blockchainSelection) {
-    return async (dispatch) => {
-
-        const currentDateTime = new Date();
-
-        const latestData = [];
-
-        for(let i = 0; i <= 1; i += 1) {
-            const yearString = currentDateTime.getFullYear().toString();
-            const monthString = (currentDateTime.getMonth() + 1).toString().padStart(2, 0);
-            const dayString = currentDateTime.getDate().toString().padStart(2, 0);
-
-            currentDateTime.setDate(currentDateTime.getDate() - 1);
-
-            const endPath = `${scansFolder}-COMPOSED`
             try {
-                const fileResponse = await fetch(`get-file/${blockchainSelection}/${yearString}/${monthString}/${dayString}/${endPath}`);
+                latestData = await fetchLatestData(blockchainSelection, dispatch);
+                if(latestData !== undefined) dispatch(getLatestDataSuccess(latestData));
+            } catch {
+                dispatch(getLatestDataFailure());
+                throw('Latest data failure')
+            }
 
-                const contentText = await fileResponse.text();
-                const contentArray = contentText.split("\n");
-        
-                for(let block of contentArray) {
-                    if(block === "") continue;
-                    const array = JSON.parse(block);
-                    latestData.push(...array);
-                }
+            if(aggregateData !== undefined && latestData !== undefined) dispatch(getCombinedDataSuccess({aggregateData, latestData}));
+
+        } catch(error) {
+            console.log(error);
+            dispatch(getCombinedDataFailure()); 
+        }
+    }
+}
+
+async function fetchAggregateData(blockchainSelection, folderDatesObject, aggregateCategoryFolders) {
+    const aggregateData = {};
+
+    if(Object.keys(folderDatesObject).length > 0) {
+        for(let yearString in folderDatesObject) {
+            for(let aggregateCategoryFolder in aggregateCategoryFolders) {
+                const data = [];
+
+                const categoryFolderName = aggregateCategoryFolders[aggregateCategoryFolder];
+                console.log(`Fetching aggregated data for year ${yearString} and ${categoryFolderName} category`);
+                const endPath = `${categoryFolderName}-COMPOSED`
+                try {
+                    const fileResponse = await fetch(`get-file/${blockchainSelection}/${yearString}/${aggregateDataFolder}/${aggregateDataFolder}/${endPath}`);
+
+                    const contentText = await fileResponse.text();
+                    const contentArray = contentText.split("\n");
+            
+                    for(let block of contentArray) {
+                        if(block === "") continue;
+                        const blockArray = JSON.parse(block);
+                        data.push(...blockArray);
+                    }
     
-            } catch(error) {
-                // console.log(error);
+                    aggregateData[aggregateCategoryFolder] = data;
+        
+                } catch(error) {
+                    // console.log(error);
+                }
             }
         }
+
+        if(Object.keys(aggregateData).length > 0) return aggregateData;
+        else return undefined;
+    }
+}
+
+async function fetchLatestData(blockchainSelection) {
+    const currentDateTime = new Date();
+
+    const latestData = [];
+
+    for(let i = 0; i <= 1; i += 1) {
+        const yearString = currentDateTime.getFullYear().toString();
+        const monthString = (currentDateTime.getMonth() + 1).toString().padStart(2, 0);
+        const dayString = currentDateTime.getDate().toString().padStart(2, 0);
+
+        currentDateTime.setDate(currentDateTime.getDate() - 1);
+
+        const endPath = `${scansFolder}-COMPOSED`
+        try {
+            const fileResponse = await fetch(`get-file/${blockchainSelection}/${yearString}/${monthString}/${dayString}/${endPath}`);
+
+            const contentText = await fileResponse.text();
+            const contentArray = contentText.split("\n");
     
-        if(latestData.length > 0) dispatch(getLatestDataSuccess(latestData));
-        
+            for(let block of contentArray) {
+                if(block === "") continue;
+                const blockArray = JSON.parse(block);
+                latestData.push(...blockArray);
+            }
+
+        } catch(error) {
+            // console.log(error);
+        }
+    }
+
+    if(latestData.length > 0) return latestData;
+}
+
+export function switchSortingEnabling() {
+    return async (dispatch) => {
+        dispatch(sortingEnabledSwitched());
     }
 }
 
 export function changeSortedField(key) {
     return async (dispatch) => {
         dispatch(sortedFieldChanged(key));
+    }
+}
+
+export function updateFilter(value, key) {
+    return async (dispatch) => {
+        dispatch(filterChanged({value, key}));
+    }
+}
+
+export function updateOperator(value, key) {
+    return async (dispatch) => {
+        dispatch(operatorChanged({value, key}));
     }
 }
