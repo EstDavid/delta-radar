@@ -1,6 +1,7 @@
 import React  from 'react';
 import Navbar from './components/Navbar';
 import ScanTable from './components/ScanTable';
+import FiltersSidebar from './components/FiltersSidebar';
 
 function App() {
   return (
@@ -8,12 +9,11 @@ function App() {
       <Navbar />
       <div className="container-fluid">
         <div className="row">
-          <div className="col-sm-1">
+          <div className="col-sm-3">
+            <FiltersSidebar />
           </div>
-          <div className="col-sm-10">
+          <div className="col-sm-9">
             <ScanTable />
-          </div>
-          <div className="col-sm-1">
           </div>
         </div>
       </div>
