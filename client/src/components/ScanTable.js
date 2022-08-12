@@ -2,8 +2,8 @@ import React, { useEffect } from "react";
 import { useDispatch, useSelector } from 'react-redux';
 import { 
   fetchScans,
-  fetchAggregateData,
-  fetchLatestScanData,
+  fetchData,
+  switchSortingEnabling,
   changeSortedField,
   scanDataSelector,
 } from '../slices/scanData';
@@ -13,7 +13,9 @@ const TableHeader = (props) => {
   const dispatch = useDispatch();
 
   const handleSort = (field) => {
-    dispatch(changeSortedField(field))
+    dispatch(switchSortingEnabling());
+    dispatch(changeSortedField(field));
+    dispatch(switchSortingEnabling());
   }
   return (
     <thead>
@@ -23,7 +25,7 @@ const TableHeader = (props) => {
           return (
             <th key={index} scope="col">
               {props.fields[fieldKey].name}
-              <button className="btn btn-light" onClick={() => handleSort(fieldKey)}>
+              <button className={`btn btn-light`} onClick={() => handleSort(fieldKey)} disabled={!props.enableSorting} >
                 {showDescending === undefined ? 
                   <i className="bi bi-caret-down"></i>
                 :
@@ -38,6 +40,34 @@ const TableHeader = (props) => {
   )
 }
 
+
+const pretifyNumber = (numberInput) => {
+  const number = parseFloat(numberInput);
+  if(number < 1) {
+    return number.toPrecision(3);
+  } else if(number < 1000) {
+    return number.toFixed(2);
+  } else {
+    const integerString = Math.trunc(number).toString();
+    const integerArray = [];
+    const separator = ' ';
+    let digitGroupArray = [];
+    for(let i = integerString.length - 1; i >= 0; i -=1) {
+      const digit = integerString[i];
+      digitGroupArray.unshift(digit);
+      if (i === 0) {
+        integerArray.unshift(...digitGroupArray);
+      }
+      else if(digitGroupArray.length >= 3 ) {
+        digitGroupArray.unshift(separator);
+        integerArray.unshift(...digitGroupArray);
+        digitGroupArray = [];
+      }
+    }
+    return integerArray.join('');
+  }
+}
+
 const TableBody = (props) => {
   return (
     <tbody>
@@ -45,9 +75,11 @@ const TableBody = (props) => {
         return (
           <tr key={indexRow}>
             {props.tableFields.map((fieldKey, indexField) => {
-              if(fieldKey !== 'tokenSequence' && fieldKey !== 'exchangeSequence') {
+              if(fieldKey !== 'tokenSequence' && fieldKey !== 'exchangeSequence' && fieldKey !== 'timestamp') {
+                let value = dataRow[props.fields[fieldKey].index];
+                if(props.fields[fieldKey].isNumerical) value = pretifyNumber(value);
                 return(
-                  <td key={indexField}>{dataRow[props.fields[fieldKey].index]}</td>
+                  <td  key={indexField}><div className="d-flex flex-nowrap justify-content-center">{value}</div></td>
                 );
               } else if (fieldKey === 'tokenSequence') {
                 const tokenArray = dataRow[props.fields[fieldKey].index].split('=>');
@@ -57,7 +89,7 @@ const TableBody = (props) => {
                       {tokenArray.map((symbol, tokenIndex) => {
                         return ( 
                           <span key={tokenIndex} className="d-flex flex-row">
-                            {tokenIndex > 0 ? <i className="bi bi-caret-right mx-2"></i> : ''}
+                            {tokenIndex > 0 ? <i className="bi bi-caret-right text-dark mx-2"></i> : ''}
                             <a className="d-flex flex-row text-decoration-none text-reset"
                             href={`https://etherscan.io/address/${props.tokenData[symbol][2].toLowerCase()}`}
                             target="_blank" rel="noreferrer noopener">
@@ -76,7 +108,7 @@ const TableBody = (props) => {
                     {exchangeArray.map((symbol, exchangeIndex) => {
                       return ( 
                         <span key={exchangeIndex} className="d-flex flex-row">
-                          {exchangeIndex > 0 ? <i className="bi bi-caret-right mx-2"></i> : ''}
+                          {exchangeIndex > 0 ? <i className="bi bi-caret-right text-dark mx-2"></i> : ''}
                           <a className="d-flex flex-row text-decoration-none text-reset"
                           href=""
                           target="_blank" rel="noreferrer noopener">
@@ -87,6 +119,12 @@ const TableBody = (props) => {
                     </div>
                   </td>
                 );
+              } else if (fieldKey === 'timestamp') {
+                const dateArray = dataRow[props.fields[fieldKey].index];
+                const timestamp = new Date(...dateArray);
+                return (
+                  <td key={indexField}>{`${timestamp.toLocaleDateString()} ${timestamp.toLocaleTimeString()}`}</td>
+                );
               }
 
             })}
@@ -96,30 +134,6 @@ const TableBody = (props) => {
       }
     </tbody>
   )
-}
-
-const sortScanData = (scanData, fieldIndex) => {
-  const sortStart = new Date();
-  const sortedArray = [...scanData];
-  sortedArray.sort((a, b) => {
-    return parseFloat(b[fieldIndex]) - parseFloat(a[fieldIndex]);
-  });
-  const sortEnd = new Date();
-  console.log(`Data sorting took ${(sortEnd - sortStart) / 1000} seconds`)
-  return sortedArray;
-}
-
-const filterScanData = (scanData, fieldIndex, filterType, searchString) => {
-  switch(filterType) {
-    case 1: // 'contains' filter
-      return scanData.filter((row) => {
-        return row[fieldIndex].includes(searchString);
-      });
-    case 2: // 'does not contain' filter
-      return scanData.filter((row) => {
-        return !row[fieldIndex].includes(searchString);
-      });
-  }
 }
 
 const ScanTable = () => {
@@ -137,9 +151,12 @@ const ScanTable = () => {
     aggregateCategoryFolders,
     aggregateData,
     latestData,
+    combinedData,
     fields,
     tableFields,
+    sortingEnabled,
     sortedFieldsDescending,
+    filteredFields
   } = useSelector(scanDataSelector);
 
   useEffect(() => {
@@ -148,10 +165,70 @@ const ScanTable = () => {
   }, [dispatch]);
 
   useEffect(() => {
-    dispatch(fetchAggregateData(blockchainSelection, folderDatesObject, aggregateCategoryFolders));
-    dispatch(fetchLatestScanData(blockchainSelection));
-
+      dispatch(fetchData(blockchainSelection, folderDatesObject, aggregateCategoryFolders));
   }, [folderDatesObject]);
+
+  const filterData = (data) => {
+    let filteredData = data;
+
+    for (let fieldKey in filteredFields) {
+      if (filteredFields[fieldKey].value !== '') {
+
+        const field = fields[fieldKey];
+
+        const searchString = filteredFields[fieldKey].value;
+  
+        const filterType = 1;
+
+        if(field.isNumerical) {
+          const operator = filteredFields[fieldKey].operator;
+          switch (operator) {
+            case '=':
+              filteredData = filteredData.filter((row) => {
+                return parseFloat(row[field.index]) === parseFloat(searchString);
+              });
+              break;
+            case '>':
+              filteredData = filteredData.filter((row) => {
+                return parseFloat(row[field.index]) > parseFloat(searchString);
+              });
+              break;
+            case '>=':
+              filteredData = filteredData.filter((row) => {
+                return parseFloat(row[field.index]) >= parseFloat(searchString);
+              });
+              break;
+            case '<':
+              filteredData = filteredData.filter((row) => {
+                return parseFloat(row[field.index]) < parseFloat(searchString);
+              });
+              break;
+            case '<=':
+              filteredData = filteredData.filter((row) => {
+                return parseFloat(row[field.index]) <= parseFloat(searchString);
+              });
+              break;
+          }
+
+        } else {
+          switch (filterType) {
+            case 1: // 'contains' filter
+              filteredData = filteredData.filter((row) => {
+                return (row[field.index].toUpperCase()).includes(searchString.toUpperCase());
+              });
+              break;
+            case 2: // 'does not contain' filter
+              filteredData = filteredData.filter((row) => {
+                return !(row[field.index].toUpperCase()).includes(searchString.toUpperCase());
+              });
+              break;
+          }
+        }
+      }
+    }
+
+    return filteredData
+  }
 
   const renderChart = () => {
     if(loading) return (
@@ -164,9 +241,9 @@ const ScanTable = () => {
     )
     if(hasErrors) return <p>Unable to display data</p>
 
-    let sortedArray = aggregateData[defaultCategoryFolder];
+    let sortedArray = filterData(combinedData);
 
-    // sortedArray = filterScanData(sortedArray, fields.date.index, 2, '2022/07/29');
+    // sortedArray = filterScanData(sortedArray, fields.date.index, 1, '2022/08/11');
 
     // sortedArray = filterScanData(sortedArray, fields.date.index, 2, '2022/07/28');
 
@@ -175,7 +252,8 @@ const ScanTable = () => {
         <TableHeader
           fields={fields}
           tableFields={tableFields}
-          sortedFieldsDescending={sortedFieldsDescending} />
+          sortedFieldsDescending={sortedFieldsDescending}
+          enableSorting={sortingEnabled} />
         <TableBody 
           scanDataChunk={sortedArray.slice(0, 50)}
           tableFields={tableFields}
