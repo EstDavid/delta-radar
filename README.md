@@ -11,8 +11,8 @@
 - [ ] Processing data for display
     - [X] Sort by any of the fields
     - [ ] Filter any of the fields
-        - [ ] Create sidebar with predefined filters
-            - [ ] By Date
+        - [X] Create sidebar with predefined filters
+            - [X] By Date
             - [X] By token
             - [X] By Exchange
             - [X] Min Delta Percentage
