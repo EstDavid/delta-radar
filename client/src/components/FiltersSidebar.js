@@ -1,10 +1,6 @@
 import React from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import { 
-    fetchScans,
-    fetchData,
-    switchSortingEnabling,
-    changeSortedField,
     updateFilter,
     updateOperator,
     scanDataSelector,
@@ -62,23 +58,23 @@ const FilterForm = (props) => {
         )
     } else {
         return (
-            <div className="row collapse justify-content-center gx-2 mt-2" id={`dashboard-collapse-${props.index}`}>
-                <div>
+            <div className="d-flex flex-nowrap collapse justify-content-center gx-2 mt-2" id={`dashboard-collapse-${props.index}`}>
+                <div className="ms-1 w-55">
                     <label htmlFor="from-date">Date from:</label>
                     <input
                         type="date"
-                        className="form-control"
+                        className="form-control form-control-s"
                         name="from-date"
                         id={`date-from-${props.fieldKey.toLowerCase()}`}
                         onChange={(event) => handleFilter(event, props.fieldKey, 'dateFrom')}
                         value={filteredFields[props.fieldKey].dateFrom}
                     />
                 </div>
-                <div>
+                <div className="ms-1 w-55">
                     <label htmlFor="until-date">Date until:</label>
                     <input
                         type="date"
-                        className="form-control"
+                        className="form-control form-control-s"
                         name="until-date"
                         id={`date-${props.fieldKey.toLowerCase()}`}
                         onChange={(event) => handleFilter(event, props.fieldKey, 'dateUntil')}
