@@ -87,14 +87,19 @@ const TableBody = (props) => {
                   <td key={indexField}>
                     <div className="d-flex justify-content-center">
                       {tokenArray.map((symbol, tokenIndex) => {
+                        const token = props.tokenData[symbol];
                         return ( 
                           <span key={tokenIndex} className="d-flex flex-row">
                             {tokenIndex > 0 ? <i className="bi bi-caret-right text-dark mx-2"></i> : ''}
-                            <a className="d-flex flex-row text-decoration-none text-reset"
-                            href={`https://etherscan.io/address/${props.tokenData[symbol][2].toLowerCase()}`}
-                            target="_blank" rel="noreferrer noopener">
-                            <img className="me-1" src={props.tokenData[symbol][4]}></img>{symbol}
-                            </a></span>
+                            {token === undefined ? 
+                              symbol :
+                              <a className="d-flex flex-row text-decoration-none text-reset"
+                                href={`${props.scannerDomain}${token[2].toLowerCase()}`}
+                                target="_blank" rel="noreferrer noopener">
+                                <img className="me-1 token-logo" src={token[4]}></img>{symbol}
+                              </a>
+                             }
+                            </span>
                           )
                         })}
                     </div>
@@ -142,15 +147,10 @@ const ScanTable = () => {
   const {
     loading,
     hasErrors,
-    latestDataLoading,
-    latestDataHasErrors,
     blockchainSelection,
-    tokenData,
+    blockchainParameters,
     folderDatesObject,
-    defaultCategoryFolder,
     aggregateCategoryFolders,
-    aggregateData,
-    latestData,
     combinedData,
     fields,
     tableFields,
@@ -168,20 +168,56 @@ const ScanTable = () => {
       dispatch(fetchData(blockchainSelection, folderDatesObject, aggregateCategoryFolders));
   }, [folderDatesObject]);
 
+  const sortData = (data) => {
+    let sortedArray = [...data];
+
+    for(let fieldKey in sortedFieldsDescending) {
+      const field = fields[fieldKey];
+      const descending = sortedFieldsDescending[fieldKey];
+      const {isNumerical, index} = field
+      const sortStart = new Date();
+      
+      if(isNumerical) {
+          sortedArray.sort((a, b) => {
+              if(descending) return parseFloat(b[index]) - parseFloat(a[index]);
+              else return parseFloat(a[index]) - parseFloat(b[index]);
+          });        
+      } else if(fieldKey === 'timestamp') {
+          sortedArray.sort((a, b) => {
+              const dateA = new Date(...a[index]);
+              const dateB = new Date(...b[index]);
+              if(descending) return dateB - dateA;
+              else return dateA - dateB;
+          });  
+      }
+      else {
+        sortedArray.sort((a, b) => {
+          if(descending) return b[index] > a[index];
+          else return b[index] < a[index];
+        });
+      }
+      const sortEnd = new Date();
+      console.log(`Data sorting took ${(sortEnd - sortStart) / 1000} seconds`)
+    }
+    return sortedArray;
+}
+
   const filterData = (data) => {
     let filteredData = data;
 
     for (let fieldKey in filteredFields) {
-      if (filteredFields[fieldKey].value !== '') {
+      const field = fields[fieldKey];
 
-        const field = fields[fieldKey];
+      const fieldFilter = filteredFields[fieldKey];
 
-        const searchString = filteredFields[fieldKey].value;
+      if (!field.isTimestamp && fieldFilter.value !== '') {
+
+        const searchString = fieldFilter.value;
   
         const filterType = 1;
 
         if(field.isNumerical) {
-          const operator = filteredFields[fieldKey].operator;
+          const operator = fieldFilter.operator;
           switch (operator) {
             case '=':
               filteredData = filteredData.filter((row) => {
@@ -209,7 +245,6 @@ const ScanTable = () => {
               });
               break;
           }
-
         } else {
           switch (filterType) {
             case 1: // 'contains' filter
@@ -224,6 +259,22 @@ const ScanTable = () => {
               break;
           }
         }
+      }
+      else if (field.isTimestamp && (fieldFilter.dateFrom !== '' || fieldFilter.dateUntil !== '')) {
+        let dateFrom, dateUntil;
+        if(fieldFilter.dateFrom !== '') dateFrom = new Date(fieldFilter.dateFrom);
+        // Date until is considered to end at the end of that date, so 24 h are added
+        if(fieldFilter.dateUntil !== '') {
+          dateUntil = new Date(fieldFilter.dateUntil);
+          dateUntil.setHours(dateUntil.getHours() + 24);
+        }
+
+        filteredData = filteredData.filter((row) => {
+          const swapSetDate = new Date(...row[field.index]);
+          if(dateFrom === undefined) return swapSetDate <= dateUntil;
+          else if(dateUntil === undefined) return swapSetDate >= dateFrom;
+          else return swapSetDate >= dateFrom && swapSetDate <= dateUntil;
+        });
       }
     }
 
@@ -241,7 +292,9 @@ const ScanTable = () => {
     )
     if(hasErrors) return <p>Unable to display data</p>
 
-    let sortedArray = filterData(combinedData);
+    let displayArray = filterData(combinedData);
+
+    displayArray = sortData(displayArray);
 
     // sortedArray = filterScanData(sortedArray, fields.date.index, 1, '2022/08/11');
 
@@ -255,10 +308,11 @@ const ScanTable = () => {
           sortedFieldsDescending={sortedFieldsDescending}
           enableSorting={sortingEnabled} />
         <TableBody 
-          scanDataChunk={sortedArray.slice(0, 50)}
+          scanDataChunk={displayArray.slice(0, 50)}
           tableFields={tableFields}
           fields={fields}
-          tokenData={tokenData[blockchainSelection]} />
+          tokenData={blockchainParameters[blockchainSelection].tokenData}
+          scannerDomain={blockchainParameters[blockchainSelection].scannerDomain} />
       </table>
     );
   }
