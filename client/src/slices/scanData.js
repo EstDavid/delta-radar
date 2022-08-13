@@ -14,10 +14,16 @@ export const initialState = {
     latestDataLoading: true,
     aggregateDataHasErrors: false,
     latestDataHasErrors: false,
-    blockchainSelection: 'ETH',
-    tokenData: {
-        ETH: tokensETH,
-        BSC: tokensBSC
+    blockchainSelection: 'BSC',
+    blockchainParameters: {
+        ETH: {
+            tokenData: tokensETH,
+            scannerDomain: 'https://etherscan.io/address/'
+        },
+        BSC: {
+            tokenData: tokensBSC,
+            scannerDomain: 'https://bscscan.com.io/address/'
+        }
     },
     folderDatesObject: {},
     aggregateData: {},
@@ -45,7 +51,7 @@ export const initialState = {
         theoreticalDeltaRefToken: { name: 'Delta Ref. Token', index: 13, isNumerical: true },
         trueDelta: { name: 'True Delta', index: 14, isNumerical: true },
         deltaAge: { name: 'Delta Age', index: 15, isNumerical: true },
-        timestamp : { name: 'Timestamp', index: 16, isNumerical: false }
+        timestamp : { name: 'Timestamp', index: 16, isNumerical: false, isTimestamp: true }
     },
     tableFields: [
         // 'date',
@@ -163,13 +169,13 @@ export const scanDataSlice = createSlice({
                 const { [payload]:value ,...rest} = state.sortedFieldsDescending;
                 state.sortedFieldsDescending = rest;
             }
-
-            for(let fieldKey in state.sortedFieldsDescending) {
-                state.combinedData = sortData(state, fieldKey);
-            }
         },
         filterChanged: (state, {payload}) => {
-            state.filteredFields[payload.key].value = payload.value;
+            if(payload.dateKey === undefined) {
+                state.filteredFields[payload.key].value = payload.value;
+            } else {
+                state.filteredFields[payload.key][payload.dateKey] = payload.value;
+            }
         },
         operatorChanged: (state, {payload}) => {
             state.filteredFields[payload.key].operator = payload.value;
@@ -182,11 +188,14 @@ export const scanDataSlice = createSlice({
                 if(field.isNumerical) {
                     state.filteredFields[fieldKey].operator = state.numericalOperators[0];
                 }
+                if(field.isTimestamp) {
+                    state.filteredFields[fieldKey].dateFrom= '';
+                    state.filteredFields[fieldKey].dateUntil = '';
+                }
             }
         }
     }
 });
-
 
 // export slice.actions
 export const {
@@ -207,35 +216,6 @@ export const {
 } = scanDataSlice.actions;
 
 // Helper functions
-const sortData = (state, fieldKey) => {
-    const scanData = state.combinedData;
-    const field = state.fields[fieldKey];
-    const descending = state.sortedFieldsDescending[fieldKey];
-    const {isNumerical, index} = field
-    const sortStart = new Date();
-    const sortedArray = [...scanData];
-    if(isNumerical) {
-        sortedArray.sort((a, b) => {
-            if(descending) return parseFloat(b[index]) - parseFloat(a[index]);
-            else return parseFloat(a[index]) - parseFloat(b[index]);
-        });        
-    } else if(fieldKey === 'timestamp') {
-        sortedArray.sort((a, b) => {
-            const dateA = new Date(...a[index]);
-            const dateB = new Date(...b[index]);
-            if(descending) return dateB - dateA;
-            else return dateA - dateB;
-        }); 
-    }
-    else {
-        if(descending) sortedArray.reverse();
-        else sortedArray.sort();    
-    }
-    const sortEnd = new Date();
-    console.log(`Data sorting took ${(sortEnd - sortStart) / 1000} seconds`)
-    return sortedArray;
-}
-
 const addTimestampToData = (dataArray, dateIndex, timeIndex) => {
     return dataArray.map((swapSetArray) => {
         const dateArray = swapSetArray[dateIndex].split('/');
@@ -409,9 +389,9 @@ export function changeSortedField(key) {
     }
 }
 
-export function updateFilter(value, key) {
+export function updateFilter(value, key, dateKey) {
     return async (dispatch) => {
-        dispatch(filterChanged({value, key}));
+        dispatch(filterChanged({value, key, dateKey}));
     }
 }
 
