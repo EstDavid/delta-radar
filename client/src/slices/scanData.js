@@ -1,6 +1,7 @@
 import { createSlice } from '@reduxjs/toolkit';
 import tokensETH from '../helpers/tokensETH.json';
 import tokensBSC from '../helpers/tokensBSC.json';
+import { getBestSwapSetByPeriod } from '../helpers/helpers';
 
 const port = process.env.PORT;
 
@@ -14,7 +15,7 @@ export const initialState = {
     latestDataLoading: true,
     aggregateDataHasErrors: false,
     latestDataHasErrors: false,
-    blockchainSelection: 'BSC',
+    blockchainSelection: 'ETH',
     blockchainParameters: {
         ETH: {
             tokenData: tokensETH,
@@ -34,6 +35,40 @@ export const initialState = {
         deltaRefToken: 'DELTAREFTOKEN'
     },
     defaultCategoryFolder: 'deltaRefToken',
+    bestSwapSets: [
+        { 
+            name: '24 hours',
+            timespanHours: 24,
+            swapSetCategories: {
+                theoreticalDeltaPercentage: [],
+                theoreticalDeltaRefToken: []
+            }
+        },
+        { 
+            name: '7 days',
+            timespanHours: 24 * 7,
+            swapSetCategories: {
+                theoreticalDeltaPercentage: [],
+                theoreticalDeltaRefToken: []
+            }
+        },
+        { 
+            name: '30 days',
+            timespanHours: 24 * 30,
+            swapSetCategories: {
+                theoreticalDeltaPercentage: [],
+                theoreticalDeltaRefToken: []
+            }
+        },
+        { 
+            name: 'all time',
+            timespanHours: undefined,
+            swapSetCategories: {
+                theoreticalDeltaPercentage: [],
+                theoreticalDeltaRefToken: []
+            }
+        },
+    ],
     fields: {
         date: { name: 'date', index: 0, isNumerical: false },
         time: { name: 'time', index: 1, isNumerical: false },
@@ -91,6 +126,9 @@ export const scanDataSlice = createSlice({
     name: 'scanData',
     initialState,
     reducers: {
+        selectBlockchain: (state, {payload}) => {
+            state.blockchainSelection = payload;
+        },
         getScanData: (state) => {
             state.loading = true;
         },
@@ -193,12 +231,26 @@ export const scanDataSlice = createSlice({
                     state.filteredFields[fieldKey].dateUntil = '';
                 }
             }
+        },
+        bestSwapSetsRetrieved: (state) => {
+            for (let i = 0; i < state.bestSwapSets.length; i += 1) {
+                const swapSetParams = state.bestSwapSets[i];
+                for (let categoryKey in swapSetParams.swapSetCategories) {
+                    state.bestSwapSets[i].swapSetCategories[categoryKey] = getBestSwapSetByPeriod(
+                        state.combinedData,
+                        swapSetParams.timespanHours,
+                        state.fields.timestamp.index,
+                        state.fields[categoryKey].index,
+                    )
+                }
+            }
         }
     }
 });
 
 // export slice.actions
 export const {
+    selectBlockchain,
     getScanData,
     folderDatesDownloaded,
     getFolderDatesFailure,
@@ -212,7 +264,8 @@ export const {
     sortedFieldChanged,
     filterChanged,
     operatorChanged,
-    setFilteredFields
+    setFilteredFields,
+    bestSwapSetsRetrieved
 } = scanDataSlice.actions;
 
 // Helper functions
@@ -299,8 +352,11 @@ export function fetchData(blockchainSelection, folderDatesObject, aggregateCateg
                 throw('Latest data failure')
             }
 
-            if(aggregateData !== undefined && latestData !== undefined) dispatch(getCombinedDataSuccess({aggregateData, latestData}));
-
+            if(aggregateData !== undefined && latestData !== undefined) {
+                dispatch(getCombinedDataSuccess({aggregateData, latestData}));
+                dispatch(bestSwapSetsRetrieved());
+            }
+            
         } catch(error) {
             console.log(error);
             dispatch(getCombinedDataFailure()); 
@@ -375,6 +431,12 @@ async function fetchLatestData(blockchainSelection) {
     }
 
     if(latestData.length > 0) return latestData;
+}
+
+export function switchBlockchain(blockchain) {
+    return async (dispatch) => {
+        dispatch(selectBlockchain(blockchain));
+    }
 }
 
 export function switchSortingEnabling() {
