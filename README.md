@@ -4,28 +4,35 @@
     - [X] Read historic summarized data
     - [X] Create timestamp data column
     - [X] Integrate aggregate and latest data
-    - [ ] Create variables
     - [X] Filter out aggregate data by timestamp
-    - [ ] Update variable pointers
     - [X] Improve number readability
 - [ ] Processing data for display
     - [X] Sort by any of the fields
-    - [ ] Filter any of the fields
+    - [X] Filter any of the fields
         - [X] Create sidebar with predefined filters
             - [X] By Date
             - [X] By token
             - [X] By Exchange
             - [X] Min Delta Percentage
             - [X] Min Delta Ref Token
-- [ ] Display data
+- [X] Display data
     - [X] Show token logos
-    - [ ] Show exchange logos
+    - [X] Show exchange logos
 - [ ] Pages
-    - [ ] Implement router
-    - [ ] Homepage => Badges with the best trades
-    - [ ] Table Page => List of scanned data
+    - [X] Implement router
+    - [X] Homepage => Badges with the best trades
+    - [X] Table Page => List of scanned data
     - [ ] Analytics =>
         - [ ] Graph of theoretical Delta per hour
+- [X] Helper functions
+    - [X] Integrate all in single file
+        - [X] Token logos
+        - [X] Exchange logos
+        - [X] Pretify number
+        - [X] Filter
+        - [X] Sort
+        - [X] Best tradX
+- [X] Create blockchain selector
 
 
 # Initial TODO list
@@ -33,6 +40,6 @@
 - [X] Define process to download all data
 - [X] Define sorting and filtering interactions
 - [X] Create buttons for filtering and sorting
-- [ ] Implement routing for different pages
-- [ ] Create best trades badges
+- [X] Implement routing for different pages
+- [X] Create best trades badges
 - [ ] Create accumulated delta graph
