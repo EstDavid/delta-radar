@@ -30,16 +30,6 @@ const FilterForm = (props) => {
     if (!props.field.isTimestamp) {
         return (
             <div className="row collapse justify-content-center gx-2 mt-2" id={`dashboard-collapse-${props.index}`}>
-                <div className="col" >
-                    <input
-                        type="text"
-                        className="form-control"
-                        // placeholder={`Filter by ${field.name} ...`}
-                        id={`filter-${props.fieldKey.toLowerCase()}`}
-                        onChange={(event) => handleFilter(event, props.fieldKey)}
-                        value={filteredFields[props.fieldKey].value}
-                    />
-                </div>
                 {props.field.isNumerical ?
                     <div className="col-auto">
                         <select
@@ -54,27 +44,37 @@ const FilterForm = (props) => {
                         </select>
                     </div>
                     : ''}
+                <div className="col" >
+                    <input
+                        type="text"
+                        className="form-control"
+                        // placeholder={`Filter by ${field.name} ...`}
+                        id={`filter-${props.fieldKey.toLowerCase()}`}
+                        onChange={(event) => handleFilter(event, props.fieldKey)}
+                        value={filteredFields[props.fieldKey].value}
+                    />
+                </div>
             </div>
         )
     } else {
         return (
-            <div className="d-flex flex-nowrap collapse justify-content-center gx-2 mt-2" id={`dashboard-collapse-${props.index}`}>
-                <div className="ms-1 w-55">
+            <div className="row collapse justify-content-center gx-2 mt-2" id={`dashboard-collapse-${props.index}`}>
+                <div className="col ms-1 w-55">
                     <label htmlFor="from-date">Date from:</label>
                     <input
                         type="date"
-                        className="form-control form-control-s"
+                        className="form-control form-control-sm"
                         name="from-date"
                         id={`date-from-${props.fieldKey.toLowerCase()}`}
                         onChange={(event) => handleFilter(event, props.fieldKey, 'dateFrom')}
                         value={filteredFields[props.fieldKey].dateFrom}
                     />
                 </div>
-                <div className="ms-1 w-55">
+                <div className="col ms-1 w-55">
                     <label htmlFor="until-date">Date until:</label>
                     <input
                         type="date"
-                        className="form-control form-control-s"
+                        className="form-control form-control-sm"
                         name="until-date"
                         id={`date-${props.fieldKey.toLowerCase()}`}
                         onChange={(event) => handleFilter(event, props.fieldKey, 'dateUntil')}
