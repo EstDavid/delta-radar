@@ -12,7 +12,8 @@ const Navbar = () => {
   } = useSelector(scanDataSelector);
 
   const handleBlockchainChange = (event) => {
-    if(blockchainSelection !== event.target.value) dispatch(switchBlockchain(event.target.value));
+    const blockchainKey = event.target.firstChild.nodeValue;
+    if(blockchainSelection !== blockchainKey) dispatch(switchBlockchain(blockchainKey));
   }
 
   return (
@@ -27,13 +28,13 @@ const Navbar = () => {
         <div className="collapse navbar-collapse ms-5" id="navbarsExample03">
           <ul className="navbar-nav me-auto mb-2 mb-sm-0">
             <li className="nav-item">
-              <NavLink 
+              <NavLink
                 to="/" className={({ isActive }) => (isActive ? 'nav-link active' : 'nav-link inactive')}
               >Home</NavLink>
             </li>
             <li className="nav-item">
-              <NavLink 
-              to="/Tables" className={({ isActive }) => (isActive ? 'nav-link active' : 'nav-link inactive')}
+              <NavLink
+                to="/Tables" className={({ isActive }) => (isActive ? 'nav-link active' : 'nav-link inactive')}
               >Tables</NavLink>
             </li>
           </ul>
@@ -41,14 +42,23 @@ const Navbar = () => {
 
         <div className="collapse navbar-collapse" id="navbar-menu">
           <div className="ms-auto d-flex mt-3 mt-md-0">
-            <div className="me-3">
-              <select className="form-select" aria-labelledby="Blockchain Selection" onChange={handleBlockchainChange}>
-                {Object.keys(blockchainParameters).map((blockchainKey, index) => {
-                  return (
-                    <option key={index} className="dropdown-item" value={blockchainKey}>{blockchainKey}</option>
-                  )
-                })}
-              </select>
+
+            <div className="btn-group mx-3" role="group" aria-label="Button group with nested dropdown">
+              <button type="button" className="btn btn-light" disabled>Select blockchain</button>
+
+              <div className="btn-group btn-group-light" role="group">
+                <button type="button" className="btn btn-light dropdown-toggle"
+                  data-bs-toggle="dropdown" aria-expanded="false">
+                  {blockchainSelection}
+                </button>
+                <ul className="dropdown-menu" onClick={handleBlockchainChange}>
+                  {Object.keys(blockchainParameters).map((blockchainKey, index) => {
+                    return (
+                      <li key={index}><span className="dropdown-item" value={blockchainKey}>{blockchainKey}</span></li>
+                    )
+                  })}
+                </ul>
+              </div>
             </div>
 
             <a
