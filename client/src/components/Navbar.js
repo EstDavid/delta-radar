@@ -44,10 +44,10 @@ const Navbar = () => {
           <div className="ms-auto d-flex mt-3 mt-md-0">
 
             <div className="btn-group mx-3" role="group" aria-label="Button group with nested dropdown">
-              <button type="button" className="btn btn-light" disabled>Select blockchain</button>
+              <button type="button" className="btn btn-info" disabled>Select blockchain</button>
 
-              <div className="btn-group btn-group-light" role="group">
-                <button type="button" className="btn btn-light dropdown-toggle"
+              <div className="btn-group" role="group">
+                <button type="button" className="btn btn-info dropdown-toggle"
                   data-bs-toggle="dropdown" aria-expanded="false">
                   {blockchainSelection}
                 </button>
