@@ -33,6 +33,14 @@
         - [X] Sort
         - [X] Best tradX
 - [X] Create blockchain selector
+- [ ] LAUNCH
+    - [X] Release on Heroku
+    - [X] Edit procfile
+    - [X] Add blockchain native token symbol
+    - [X] Add logo
+    - [X] Eliminate fetching console.logs
+    - [X] Add to portfolio
+    - [ ] Start README
 
 
 # Initial TODO list
