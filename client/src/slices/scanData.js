@@ -299,7 +299,7 @@ export function fetchScans(blockchainSelection) {
         dispatch(getScanData());
 
         try {
-            console.log(`Fetching index data for ${blockchainSelection} blockchain`);
+            // console.log(`Fetching index data for ${blockchainSelection} blockchain`);
             const response = await fetch(`/get-files/${blockchainSelection}`);
 
             const filenames = await response.json();
@@ -375,7 +375,7 @@ async function fetchAggregateData(blockchainSelection, folderDatesObject, aggreg
                 const data = [];
 
                 const categoryFolderName = aggregateCategoryFolders[aggregateCategoryFolder];
-                console.log(`Fetching aggregated data for year ${yearString} and ${categoryFolderName} category`);
+                // console.log(`Fetching aggregated data for year ${yearString} and ${categoryFolderName} category`);
                 const endPath = `${categoryFolderName}-COMPOSED`
                 try {
                     const fileResponse = await fetch(`get-file/${blockchainSelection}/${yearString}/${aggregateDataFolder}/${aggregateDataFolder}/${endPath}`);
