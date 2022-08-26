@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "proxy": "http://localhost:5000",
-  "homepage": "https://uniswapv3-charts.herokuapp.com/",
+  "homepage": "https://delta-radar.herokuapp.com/",
   "dependencies": {
     "@metamask/onboarding": "^1.0.1",
     "@reduxjs/toolkit": "^1.8.3",
