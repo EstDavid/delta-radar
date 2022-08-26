@@ -33,7 +33,8 @@ const Navbar = () => {
         <button className="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar-menu" aria-controls="navbar-menu" aria-expanded="false" aria-label="Toggle navigation">
           <span className="navbar-toggler-icon"></span>
         </button>
-        <div className="collapse navbar-collapse ms-5" id="navbarsExample03">
+        <div className="collapse navbar-collapse" id="navbar-menu">
+          
           <ul className="navbar-nav me-auto mb-2 mb-sm-0">
             <li className="nav-item">
               <NavLink
@@ -46,9 +47,7 @@ const Navbar = () => {
               >Tables</NavLink>
             </li>
           </ul>
-        </div>
 
-        <div className="collapse navbar-collapse" id="navbar-menu">
           <div className="ms-auto d-flex mt-3 mt-md-0">
 
             <div className="btn-group mx-3" role="group" aria-label="Button group with nested dropdown">
