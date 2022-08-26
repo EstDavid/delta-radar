@@ -20,7 +20,15 @@ const Navbar = () => {
     <nav className="navbar navbar-expand-md navbar-dark bg-dark text-white pb-2" aria-label="UniCharts navbar">
       <div className="container-fluid">
         <a href="/" className="navbar-brand text-white text-decoration-none me-md-auto">
+          <div className="d-flex align-items-center">
+          <h2><span className="badge bg-info me-2 p-2 app-logo d-flex align-items-center">
+            <div className="d-flex align-items-bottom">
+            <i className="bi bi-triangle-fill"></i><span className="">R</span>
+            </div>
+            </span>
+          </h2>
           <span>Delta Radar</span>
+          </div>
         </a>
         <button className="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar-menu" aria-controls="navbar-menu" aria-expanded="false" aria-label="Toggle navigation">
           <span className="navbar-toggler-icon"></span>
