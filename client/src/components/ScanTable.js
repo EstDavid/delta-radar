@@ -47,13 +47,7 @@ const TableBody = (props) => {
         return (
           <tr key={indexRow}>
             {props.tableFields.map((fieldKey, indexField) => {
-              if(fieldKey !== 'tokenSequence' && fieldKey !== 'exchangeSequence' && fieldKey !== 'timestamp') {
-                let value = dataRow[props.fields[fieldKey].index];
-                if(props.fields[fieldKey].isNumerical) value = pretifyNumber(value);
-                return(
-                  <td  key={indexField}><div className="d-flex flex-nowrap justify-content-center">{value}</div></td>
-                );
-              } else if (fieldKey === 'tokenSequence') {
+              if (fieldKey === 'tokenSequence') {
                 const tokenArray = dataRow[props.fields[fieldKey].index].split('=>');
                 return (
                   <td key={indexField}>
@@ -80,6 +74,39 @@ const TableBody = (props) => {
                 const timestamp = new Date(...dateArray);
                 return (
                   <td key={indexField}>{`${timestamp.toLocaleDateString()} ${timestamp.toLocaleTimeString()}`}</td>
+                );
+              } else if (fieldKey === 'inputQty' || fieldKey === 'theoreticalDelta' || fieldKey === 'theoreticalDeltaRefToken') {
+                let value = dataRow[props.fields[fieldKey].index];
+                const tokenArray = dataRow[props.fields.tokenSequence.index].split('=>');
+                const symbol = fieldKey === 'theoreticalDeltaRefToken' ? props.symbolNativeToken : tokenArray[0];
+                const token = props.tokenData[symbol];
+                if(props.fields[fieldKey].isNumerical) value = pretifyNumber(value);
+                return (
+                  <td key={indexField}>
+                    {value}
+                    {token === undefined ? 
+                    <small><span className="text-secondary ms-1">{symbol}</span></small>
+                    :
+                      <a className="d-flex flex-row text-decoration-none text-reset align-items-center"
+                        href={`${props.scannerDomain}${token[2].toLowerCase()}`}
+                        target="_blank" rel="noreferrer noopener">
+                        <img className="me-1 token-logo-small" src={token[4]}></img>
+                        <small><span className="text-secondary ms-1">{symbol}</span></small>
+                      </a>
+                    }
+                  </td>
+                );
+              } else if(fieldKey === 'theoreticalDeltaPercentage') {
+                let value = dataRow[props.fields[fieldKey].index];
+                if(props.fields[fieldKey].isNumerical) value = pretifyNumber(value/100);
+                return(
+                  <td key={indexField}><div className="d-flex flex-nowrap justify-content-center">{`${value} %`}</div></td>
+                );
+              } else {
+                let value = dataRow[props.fields[fieldKey].index];
+                if(props.fields[fieldKey].isNumerical) value = pretifyNumber(value);
+                return(
+                  <td key={indexField}><div className="d-flex flex-nowrap justify-content-center">{value}</div></td>
                 );
               }
 
@@ -134,7 +161,8 @@ const ScanTable = () => {
           tableFields={tableFields}
           fields={fields}
           tokenData={blockchainParameters[blockchainSelection].tokenData}
-          scannerDomain={blockchainParameters[blockchainSelection].scannerDomain} />
+          scannerDomain={blockchainParameters[blockchainSelection].scannerDomain}
+          symbolNativeToken={blockchainParameters[blockchainSelection].symbolNativeToken} />
       </table>
     );
   }

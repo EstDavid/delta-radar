@@ -84,8 +84,8 @@ export const initialState = {
         optimizedInput: { name: 'Optimized Input', index: 9, isNumerical: false },
         tradeTriggered: { name: 'Trade Triggered', index: 10, isNumerical: false },
         theoreticalDelta: { name: 'Delta', index: 11, isNumerical: true },
-        theoreticalDeltaPercentage: { name: 'Delta %', index: 12, isNumerical: true },
-        theoreticalDeltaRefToken: { name: 'Delta Ref. Token', index: 13, isNumerical: true },
+        theoreticalDeltaPercentage: { name: 'Delta (%)', index: 12, isNumerical: true },
+        theoreticalDeltaRefToken: { name: 'Delta (Native Token)', index: 13, isNumerical: true },
         trueDelta: { name: 'True Delta', index: 14, isNumerical: true },
         deltaAge: { name: 'Delta Age', index: 15, isNumerical: true },
         timestamp : { name: 'Timestamp', index: 16, isNumerical: false, isTimestamp: true }
