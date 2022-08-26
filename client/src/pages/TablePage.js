@@ -10,10 +10,10 @@ function TablePage() {
       <Navbar />
       <div className="container-fluid">
         <div className="row">
-          <div className="col-sm-2">
+          <div className="col-lg-2">
             <FiltersSidebar />
           </div>
-          <div className="col-sm-9">
+          <div className="col-lg-9 col-12">
             <ScanTable />
           </div>
         </div>

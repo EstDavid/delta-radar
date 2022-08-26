@@ -35,7 +35,7 @@ const Navbar = () => {
         </button>
         <div className="collapse navbar-collapse" id="navbar-menu">
           
-          <ul className="navbar-nav me-auto mb-2 mb-sm-0">
+          <ul className="navbar-nav ms-md-4 me-auto mb-2 mb-sm-0">
             <li className="nav-item">
               <NavLink
                 to="/" className={({ isActive }) => (isActive ? 'nav-link active' : 'nav-link inactive')}
@@ -48,9 +48,9 @@ const Navbar = () => {
             </li>
           </ul>
 
-          <div className="ms-auto d-flex mt-3 mt-md-0">
+          <div className="ms-md-auto d-flex mt-3 mt-md-0">
 
-            <div className="btn-group mx-3" role="group" aria-label="Button group with nested dropdown">
+            <div className="btn-group me-3" role="group" aria-label="Button group with nested dropdown">
               <button type="button" className="btn btn-info" disabled>Select blockchain</button>
 
               <div className="btn-group" role="group">
