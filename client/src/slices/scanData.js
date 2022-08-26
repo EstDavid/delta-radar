@@ -19,11 +19,13 @@ export const initialState = {
     blockchainParameters: {
         ETH: {
             tokenData: tokensETH,
-            scannerDomain: 'https://etherscan.io/address/'
+            scannerDomain: 'https://etherscan.io/address/',
+            symbolNativeToken: 'ETH'
         },
         BSC: {
             tokenData: tokensBSC,
-            scannerDomain: 'https://bscscan.com.io/address/'
+            scannerDomain: 'https://bscscan.com.io/address/',
+            symbolNativeToken: 'BNB'
         }
     },
     folderDatesObject: {},

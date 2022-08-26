@@ -19,8 +19,7 @@ const DeltaBadge = (props) => {
 
     const swapSet = swapSetCategories.theoreticalDeltaRefToken;
 
-    const tokenData = blockchainParameters[blockchainSelection].tokenData;
-    const scannerDomain = blockchainParameters[blockchainSelection].scannerDomain;
+    const {tokenData, scannerDomain, symbolNativeToken} = blockchainParameters[blockchainSelection];
 
     let timestamp, tokenSequence, exchangeSequence, delta, deltaPerc, deltaRefToken;
 
@@ -65,7 +64,7 @@ const DeltaBadge = (props) => {
                                 <h3><span className="badge bg-primary me-2">Delta: </span></h3>
                                 <h4>
                                     <span className="badge rounded-pill  bg-light text-dark mx-2">{`${pretifyNumber(delta)} ${tokenSequence[0]}`}</span>
-                                    <span className="badge rounded-pill  bg-info text-dark mx-2">{`(${pretifyNumber(deltaRefToken)} ETH)`}</span>
+                                    <span className="badge rounded-pill  bg-info text-dark mx-2">{`(${pretifyNumber(deltaRefToken)} ${symbolNativeToken})`}</span>
                                 </h4>
                                 <h5>
                                     <span className="fs-6 me-4">({pretifyNumber(deltaPerc/100)} %)</span>
