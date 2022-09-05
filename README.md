@@ -1,53 +1,56 @@
-# Main features of the app
-- [X] Reading data from storage
-    - [X] Read latest 24 h data
-    - [X] Read historic summarized data
-    - [X] Create timestamp data column
-    - [X] Integrate aggregate and latest data
-    - [X] Filter out aggregate data by timestamp
-    - [X] Improve number readability
-- [ ] Processing data for display
-    - [X] Sort by any of the fields
-    - [X] Filter any of the fields
-        - [X] Create sidebar with predefined filters
-            - [X] By Date
-            - [X] By token
-            - [X] By Exchange
-            - [X] Min Delta Percentage
-            - [X] Min Delta Ref Token
-- [X] Display data
-    - [X] Show token logos
-    - [X] Show exchange logos
-- [ ] Pages
-    - [X] Implement router
-    - [X] Homepage => Badges with the best trades
-    - [X] Table Page => List of scanned data
-    - [ ] Analytics =>
-        - [ ] Graph of theoretical Delta per hour
-- [X] Helper functions
-    - [X] Integrate all in single file
-        - [X] Token logos
-        - [X] Exchange logos
-        - [X] Pretify number
-        - [X] Filter
-        - [X] Sort
-        - [X] Best tradX
-- [X] Create blockchain selector
-- [ ] LAUNCH
-    - [X] Release on Heroku
-    - [X] Edit procfile
-    - [X] Add blockchain native token symbol
-    - [X] Add logo
-    - [X] Eliminate fetching console.logs
-    - [X] Add to portfolio
-    - [ ] Start README
+# What is Delta Radar
+
+Delta Radar is a web app which displays the best potential trades of a DeFi trading bot. The app shows potential profitable arbitrage trades accross different token pools in Decentralized Exchanges (DEXs)
+
+## The DeltaBot engine
+
+The Delta Radar frontend is a small part of a broader project called DeltaBot. This project is aimed at creating an arbitrage trading bot which, connected to a smart contract is capable of the following:
++ Scanning token pools accross different DEXs
++ Finding price differences which yield a profit
++ Calculating the optimum amount of the first token in the trade sequence
++ Triggering the associated smart contract with flash loan capabilities and attempt to catch the potential profit of price differences
 
 
-# Initial TODO list
-- [X] Clean ALL unnecessary boilerplate code from previous app
-- [X] Define process to download all data
-- [X] Define sorting and filtering interactions
-- [X] Create buttons for filtering and sorting
-- [X] Implement routing for different pages
-- [X] Create best trades badges
-- [ ] Create accumulated delta graph
+## Output
+
+Delta Radar displays the historic output from the trading bot scanner module and allows to search and filter past potential trades, according to criteria such as profitability, date, token or exchange 
+
+# Understanding the data displayed
+
+## What is a Delta
+
+A Delta is the name given in this app to the actual profit in terms of the first coin in the swap sequence. For instance, let's say pool A has the price of WBTC-USD at 25000, and pool B has a price of 25300. If we were to start the arbitrage by buying 1 WBTC with a price of 25000 USD in pool A, and then sell it for 25300 in pool B, the total Delta would be of 300 USD 
+
+### Delta percentage
+
+Delta percentage is the result of dividing the Delta by the initial quantity, or input quantity of the first token in the swap sequence and multiplying it by 100. Following the previous example, the Delta Percentage would be 300 / 25000 * 100 => 1.2%
+
+### Delta in terms of native token
+
+Since an arbitrage opportunity might come in the form of many different token combinations, it gets hard to compare the profitability among them just by looking at their Delta or even at their Delta Percentage. That is why, when the SwapSet is recorded, its Delta is converted to the native token of the blockchain where the arbitrage opportunity occurs. 
+For instance, native token Deltas in the ethereum blockchain are converted to ETH, while Deltas in the Binance Smart Chain ar converted to BNB and so on.
+
+### Theoretical Delta vs True Delta
+All Delta data shown by Delta Radar is theoretical and doesn't take into account gas fees. The one thing that this theoretical data takes into account is slippage. Since Delta is calculated using the x·y=k formula for all liquidity pools in a swapset, the output already includes slippage. Other factors, such as gas fees and change of token quantities due to competing traders on the same block that the arbitrage takes place, can and will have a strong impact on the final profitability. Therefore, true Delta will usually be much lower than the theoretical one displayed by the app.
+
+## What is a Swapset
+
+SwapSet is a class used in DeltaBot that contains all the data corresponding to an arbitrage opportunity. A SwapSet object contains information such as timestamp the object was created, tokens and exchanges swap sequence, pool data (addresses, liquidity...) and delta data. 
+It also contains methods to manipulate and extract data from the object. Delta radar displays a small subset of all the information contained in SwapSet  objects
+
+
+# Main architecture of the App
+
+Swapset data generated by the DeltaBot trading bot is stored in Google Cloud Storage. The Delta Radar app uses an express server to read this data and pass it to the web application, which acts as the client. 
+The client uses Reduxjs to fetch the data from the server and populate it through the differet components.
+
+
+# Getting real, the actual experience with DeFi arbitrage
+
+So far, DeltaBot has been launched on the Ethereum Mainnet and Binance Smart Chain. Once the bot starts firing swaps and tries to bring as many profitable deltas as possible, the reality turns out to be much different from what would be expected based on theoretical data.
+
+The main problem arises obviously from the competition with other traders. Arbitrage opportunities are detected by other agents and potential profits are quickly eroded. Most trade transactions are reverted because the actual swap sequence generates a loss instead of a profit, and therefore the amount of first token that is borrowed cannot be returned completely.
+
+From the few transactions that do get executed, they generate a profit orders of magnitude smaller than the gas fee corresponding to that transaction. So the transactions are executed at a loss, that becomes even bigger if we include the gas fees from failed ones.
+
+In order to revert this situation and actually make the DeltaBot profitable, two strategies could be used. The first one would be to try search other blockchains which have less competition. The other approach would be to get a look into what is actually going on in the mempool and by placing the transaction in the right position, have a much better likelyhood that it will be executed successfully and will be profitable, even taking gas fees into account.
