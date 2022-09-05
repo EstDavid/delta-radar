@@ -1,0 +1,53 @@
+# Main features of the app
+- [X] Reading data from storage
+    - [X] Read latest 24 h data
+    - [X] Read historic summarized data
+    - [X] Create timestamp data column
+    - [X] Integrate aggregate and latest data
+    - [X] Filter out aggregate data by timestamp
+    - [X] Improve number readability
+- [ ] Processing data for display
+    - [X] Sort by any of the fields
+    - [X] Filter any of the fields
+        - [X] Create sidebar with predefined filters
+            - [X] By Date
+            - [X] By token
+            - [X] By Exchange
+            - [X] Min Delta Percentage
+            - [X] Min Delta Ref Token
+- [X] Display data
+    - [X] Show token logos
+    - [X] Show exchange logos
+- [ ] Pages
+    - [X] Implement router
+    - [X] Homepage => Badges with the best trades
+    - [X] Table Page => List of scanned data
+    - [ ] Analytics =>
+        - [ ] Graph of theoretical Delta per hour
+- [X] Helper functions
+    - [X] Integrate all in single file
+        - [X] Token logos
+        - [X] Exchange logos
+        - [X] Pretify number
+        - [X] Filter
+        - [X] Sort
+        - [X] Best tradX
+- [X] Create blockchain selector
+- [ ] LAUNCH
+    - [X] Release on Heroku
+    - [X] Edit procfile
+    - [X] Add blockchain native token symbol
+    - [X] Add logo
+    - [X] Eliminate fetching console.logs
+    - [X] Add to portfolio
+    - [ ] Start README
+
+
+# Initial TODO list
+- [X] Clean ALL unnecessary boilerplate code from previous app
+- [X] Define process to download all data
+- [X] Define sorting and filtering interactions
+- [X] Create buttons for filtering and sorting
+- [X] Implement routing for different pages
+- [X] Create best trades badges
+- [ ] Create accumulated delta graph
