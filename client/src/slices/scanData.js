@@ -14,7 +14,7 @@ export const initialState = {
     latestDataLoading: true,
     aggregateDataHasErrors: false,
     latestDataHasErrors: false,
-    blockchainSelection: 'BSC',
+    blockchainSelection: 'ETH',
     blockchainParameters: {
         ETH: {
             tokenData: tokensETH,
