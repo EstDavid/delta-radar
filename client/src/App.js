@@ -2,40 +2,29 @@ import React, { useEffect }  from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { Routes, Route } from 'react-router-dom';
 import { 
-  fetchScans,
-  fetchData,
-  switchSortingEnabling,
-  changeSortedField,
+  fetchBestSwapSets,
   scanDataSelector,
+  initFields,
 } from './slices/scanData';
 import HomePage from './pages/HomePage';
 import TablePage from './pages/TablePage';
 
 function App() {
-  const dispatch = useDispatch();
+  const dispatch = useDispatch()
 
   const {
     blockchainSelection,
-    folderDatesObject,
-    aggregateCategoryFolders,
-  } = useSelector(scanDataSelector);
+    bestSwapSets
+} = useSelector(scanDataSelector);
 
   useEffect(() => {
-    dispatch(fetchScans(blockchainSelection));
+    dispatch(initFields());
+    dispatch(fetchBestSwapSets(blockchainSelection, bestSwapSets));
 
-  }, [dispatch]);
-
-  useEffect(() => {
-    dispatch(fetchScans(blockchainSelection));
-
-  }, [blockchainSelection]);
-
-  useEffect(() => {
-      dispatch(fetchData(blockchainSelection, folderDatesObject, aggregateCategoryFolders));
-  }, [folderDatesObject]);
+  }, []);
 
   return (
-    <Routes >
+    <Routes>
       <Route path="/" element={<HomePage />} />
       <Route path="/Tables" element={<TablePage />} />
     </Routes>

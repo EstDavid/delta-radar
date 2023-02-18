@@ -1,9 +1,11 @@
+const SwapSet = require('../models/swapSet')
+
 export const sortDataByFields = (data, fields, sortedFields) => {
     let sortedArray = [...data];
 
-    for(let fieldKey in sortedFields) {
-      const field = fields[fieldKey];
-      const descending = sortedFields[fieldKey];
+    for(let fieldObject of sortedFields) {
+      const field = fields[fieldObject.field];
+      const descending = fieldObject.descending;
       const {isNumerical, index} = field
       const sortStart = new Date();
       
@@ -12,10 +14,10 @@ export const sortDataByFields = (data, fields, sortedFields) => {
               if(descending) return parseFloat(b[index]) - parseFloat(a[index]);
               else return parseFloat(a[index]) - parseFloat(b[index]);
           });        
-      } else if(fieldKey === 'timestamp') {
+      } else if(fieldObject.field === 'timestamp') {
           sortedArray.sort((a, b) => {
-              const dateA = new Date(...a[index]);
-              const dateB = new Date(...b[index]);
+              const dateA = new Date(...a.timestamp);
+              const dateB = new Date(...b.timestamp);
               if(descending) return dateB - dateA;
               else return dateA - dateB;
           });  
@@ -35,10 +37,10 @@ export const sortDataByFields = (data, fields, sortedFields) => {
 export const filterDataByFields = (data, filteredFields, fields) => {
     let filteredData = data;
 
-    for (let fieldKey in filteredFields) {
-      const field = fields[fieldKey];
+    for (let fieldName in filteredFields) {
+      const field = fields[fieldName];
 
-      const fieldFilter = filteredFields[fieldKey];
+      const fieldFilter = filteredFields[fieldName];
 
       if (!field.isTimestamp && fieldFilter.value !== '') {
 
@@ -51,27 +53,27 @@ export const filterDataByFields = (data, filteredFields, fields) => {
           switch (operator) {
             case '=':
               filteredData = filteredData.filter((row) => {
-                return parseFloat(row[field.index]) === parseFloat(searchString);
+                return parseFloat(row[fieldName]) === parseFloat(searchString);
               });
               break;
             case '>':
               filteredData = filteredData.filter((row) => {
-                return parseFloat(row[field.index]) > parseFloat(searchString);
+                return parseFloat(row[fieldName]) > parseFloat(searchString);
               });
               break;
             case '>=':
               filteredData = filteredData.filter((row) => {
-                return parseFloat(row[field.index]) >= parseFloat(searchString);
+                return parseFloat(row[fieldName]) >= parseFloat(searchString);
               });
               break;
             case '<':
               filteredData = filteredData.filter((row) => {
-                return parseFloat(row[field.index]) < parseFloat(searchString);
+                return parseFloat(row[fieldName]) < parseFloat(searchString);
               });
               break;
             case '<=':
               filteredData = filteredData.filter((row) => {
-                return parseFloat(row[field.index]) <= parseFloat(searchString);
+                return parseFloat(row[fieldName]) <= parseFloat(searchString);
               });
               break;
           }
@@ -79,12 +81,12 @@ export const filterDataByFields = (data, filteredFields, fields) => {
           switch (filterType) {
             case 1: // 'contains' filter
               filteredData = filteredData.filter((row) => {
-                return (row[field.index].toUpperCase()).includes(searchString.toUpperCase());
+                return (row[fieldName].toUpperCase()).includes(searchString.toUpperCase());
               });
               break;
             case 2: // 'does not contain' filter
               filteredData = filteredData.filter((row) => {
-                return !(row[field.index].toUpperCase()).includes(searchString.toUpperCase());
+                return !(row[fieldName].toUpperCase()).includes(searchString.toUpperCase());
               });
               break;
           }
@@ -100,7 +102,7 @@ export const filterDataByFields = (data, filteredFields, fields) => {
         }
 
         filteredData = filteredData.filter((row) => {
-          const swapSetDate = new Date(...row[field.index]);
+          const swapSetDate = new Date(row[fieldName]);
           if(dateFrom === undefined) return swapSetDate <= dateUntil;
           else if(dateUntil === undefined) return swapSetDate >= dateFrom;
           else return swapSetDate >= dateFrom && swapSetDate <= dateUntil;
@@ -109,28 +111,6 @@ export const filterDataByFields = (data, filteredFields, fields) => {
     }
 
     return filteredData
-}
-
-export const getBestSwapSetByPeriod = (data, timespanHours, timestampIndex, fieldIndex) => {
-    let bestSwapSet = [];
-    let bestResult;
-
-    let fromTimestamp = new Date();
-    fromTimestamp.setHours(fromTimestamp.getHours() - timespanHours);
-
-    for(let swapSet of data) {
-        const timestamp = new Date(...swapSet[timestampIndex]);
-        if(timestamp < fromTimestamp) continue;
-
-        const value = parseFloat(swapSet[fieldIndex]);
-
-        if(bestResult === undefined || value > bestResult) {
-            bestSwapSet = swapSet;
-            bestResult = value;
-        }   
-    }
-
-    return bestSwapSet;
 }
 
 export const pretifyNumber = (numberInput) => {

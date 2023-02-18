@@ -31,7 +31,70 @@ const cloudStorage = new Storage({
   projectId: projectId,
 });
 
+// SETTING UP MONGOOSE
 const bucket = cloudStorage.bucket(bucketName);
+
+const mongoose = require('mongoose');
+const SwapSet = require('./client/src/models/swapSet');
+
+mongoose.set('strictQuery', false)
+
+const url = process.env.MONGODB_URI
+
+console.log('connecting to', url)
+
+mongoose.connect(url)
+    .then(result => {
+        console.log('connected to MongoDB')
+    })
+    .catch((error) => {
+        console.log('error connecting to MongoDB', error.message)
+    })
+
+
+// DOWNLOAD BEST SWAPSETS
+app.get("/get-top-aggregate/:blockchain/:timestamp/:field1/:order1", (req, res, next) => {
+  const blockchain = req.params.blockchain
+  const timestamp = new Date(...req.params.timestamp.split('-'))
+  const field1 = req.params.field1
+  const ascending = req.params.order1 === 'ASC' ? 1 : -1
+
+  console.log(blockchain, timestamp, field1, ascending)
+
+  SwapSet.findOne({blockchain, timestamp: {$gte: timestamp}}).sort({[field1]: ascending})
+    .then(result => {
+      console.log(result)
+      if (result !== undefined && result !== null) {
+        res.status(200).send(result)
+      } else {
+        res.status(404)
+      }
+    })
+})
+
+
+// DOWNLOAD LIST SWAPSETS FOR TABLE
+app.get("/get-list/:blockchain/:fields/:descending", (req, res, next) => {
+  const blockchain = req.params.blockchain
+  const fields = req.params.fields.split('&')
+  const ascending = req.params.descending.split('&')
+
+  const sortingObject = {}
+
+  for (let i = 0; i < fields.length; i += 1) {
+    sortingObject[fields[i]] = ascending[i]
+  }
+
+  SwapSet.find({blockchain}).sort(sortingObject).limit(40)
+    .then(result => {
+      if (result !== undefined && result !== null) {
+        res.status(200).send(result)
+      } else {
+        res.status(404)
+      }
+    })
+})
+
 
 // DOWNLOAD FILE
 app.get("/get-file/:blockchain/:year/:month/:day/:endPath", (req, res, next) => {

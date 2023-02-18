@@ -17,19 +17,25 @@ const TableHeader = (props) => {
     dispatch(changeSortedField(field));
     dispatch(switchSortingEnabling());
   }
+
   return (
     <thead>
       <tr>
         {props.tableFields.map((fieldKey, index) => {
-          const showDescending = props.sortedFieldsDescending[fieldKey];
+          const findSortedField = (field) => {
+            return field.name === fieldKey
+          }
+          const i = props.sortedFields.findIndex(findSortedField)
+          const fieldState = props.sortedFields[i]
+          const {active, descending} = fieldState;
           return (
             <th key={index} scope="col">
               {props.fields[fieldKey].name}
               <button className={`btn btn-light`} onClick={() => handleSort(fieldKey)} disabled={!props.enableSorting} >
-                {showDescending === undefined ? 
+                {active === false ? 
                   <i className="bi bi-caret-down"></i>
                 :
-                  showDescending ? <i className="bi bi-caret-down-fill"></i> : <i className="bi bi-caret-up-fill"></i>
+                  descending ? <i className="bi bi-caret-down-fill"></i> : <i className="bi bi-caret-up-fill"></i>
                 }
               </button>
             </th>
@@ -48,7 +54,7 @@ const TableBody = (props) => {
           <tr key={indexRow}>
             {props.tableFields.map((fieldKey, indexField) => {
               if (fieldKey === 'tokenSequence') {
-                const tokenArray = dataRow[props.fields[fieldKey].index].split('=>');
+                const tokenArray = dataRow[fieldKey].split('=>');
                 return (
                   <td key={indexField}>
                     <TokenSequence
@@ -60,7 +66,7 @@ const TableBody = (props) => {
                   </td>
                 );
               } else if (fieldKey === 'exchangeSequence') {
-                const exchangeArray = dataRow[props.fields[fieldKey].index].split('=>');
+                const exchangeArray = dataRow[fieldKey].split('=>');
                 return(
                   <td key={indexField}>
                     <ExchangeSequence 
@@ -70,14 +76,13 @@ const TableBody = (props) => {
                   </td>
                 );
               } else if (fieldKey === 'timestamp') {
-                const dateArray = dataRow[props.fields[fieldKey].index];
-                const timestamp = new Date(...dateArray);
+                const timestamp = new Date(dataRow[fieldKey]);
                 return (
                   <td key={indexField}>{`${timestamp.toLocaleDateString()} ${timestamp.toLocaleTimeString()}`}</td>
                 );
               } else if (fieldKey === 'inputQty' || fieldKey === 'theoreticalDelta' || fieldKey === 'theoreticalDeltaRefToken') {
-                let value = dataRow[props.fields[fieldKey].index];
-                const tokenArray = dataRow[props.fields.tokenSequence.index].split('=>');
+                let value = dataRow[fieldKey];
+                const tokenArray = dataRow.tokenSequence.split('=>');
                 const symbol = fieldKey === 'theoreticalDeltaRefToken' ? props.symbolNativeToken : tokenArray[0];
                 const token = props.tokenData[symbol];
                 if(props.fields[fieldKey].isNumerical) value = pretifyNumber(value);
@@ -97,13 +102,13 @@ const TableBody = (props) => {
                   </td>
                 );
               } else if(fieldKey === 'theoreticalDeltaPercentage') {
-                let value = dataRow[props.fields[fieldKey].index];
+                let value = dataRow[fieldKey];
                 if(props.fields[fieldKey].isNumerical) value = pretifyNumber(value/100);
                 return(
                   <td key={indexField}><div className="d-flex flex-nowrap justify-content-center">{`${value} %`}</div></td>
                 );
               } else {
-                let value = dataRow[props.fields[fieldKey].index];
+                let value = dataRow[fieldKey];
                 if(props.fields[fieldKey].isNumerical) value = pretifyNumber(value);
                 return(
                   <td key={indexField}><div className="d-flex flex-nowrap justify-content-center">{value}</div></td>
@@ -130,7 +135,7 @@ const ScanTable = () => {
     fields,
     tableFields,
     sortingEnabled,
-    sortedFieldsDescending,
+    sortedFields,
     filteredFields
   } = useSelector(scanDataSelector);
 
@@ -147,14 +152,12 @@ const ScanTable = () => {
 
     let displayArray = filterDataByFields(combinedData, filteredFields, fields);
 
-    displayArray = sortDataByFields(displayArray, fields, sortedFieldsDescending);
-
     return (
       <table className="table">
         <TableHeader
           fields={fields}
           tableFields={tableFields}
-          sortedFieldsDescending={sortedFieldsDescending}
+          sortedFields={sortedFields}
           enableSorting={sortingEnabled} />
         <TableBody 
           scanDataChunk={displayArray.slice(0, 50)}

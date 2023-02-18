@@ -22,14 +22,13 @@ const DeltaBadge = (props) => {
     const {tokenData, scannerDomain, symbolNativeToken} = blockchainParameters[blockchainSelection];
 
     let timestamp, tokenSequence, exchangeSequence, delta, deltaPerc, deltaRefToken;
-
-    if(!loading && !hasErrors && swapSet.length > 0) {
-        timestamp = new Date(...swapSet[fields.timestamp.index]);
-        tokenSequence = swapSet[fields.tokenSequence.index].split('=>');
-        exchangeSequence = swapSet[fields.exchangeSequence.index].split('=>');
-        delta = swapSet[fields.theoreticalDelta.index];
-        deltaPerc = swapSet[fields.theoreticalDeltaPercentage.index];
-        deltaRefToken = swapSet[fields.theoreticalDeltaRefToken.index];
+    if(!loading && !hasErrors) {
+        timestamp = swapSet.timestamp;
+        tokenSequence = swapSet.tokenSequence.split('=>');
+        exchangeSequence = swapSet.exchangeSequence.split('=>');
+        delta = swapSet.theoreticalDelta;
+        deltaPerc = swapSet.theoreticalDeltaPercentage;
+        deltaRefToken = swapSet.theoreticalDeltaRefToken;
     }
 
     return (

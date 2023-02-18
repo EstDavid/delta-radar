@@ -1,7 +1,6 @@
 import { createSlice } from '@reduxjs/toolkit';
 import tokensETH from '../helpers/tokensETH.json';
 import tokensBSC from '../helpers/tokensBSC.json';
-import { getBestSwapSetByPeriod } from '../helpers/helpers';
 
 const port = process.env.PORT;
 
@@ -15,7 +14,7 @@ export const initialState = {
     latestDataLoading: true,
     aggregateDataHasErrors: false,
     latestDataHasErrors: false,
-    blockchainSelection: 'ETH',
+    blockchainSelection: 'BSC',
     blockchainParameters: {
         ETH: {
             tokenData: tokensETH,
@@ -110,7 +109,7 @@ export const initialState = {
         // 'deltaAge',   
     ],
     sortingEnabled: true,
-    sortedFieldsDescending: {},
+    sortedFields: [],
     filterableFields: [
         'timestamp',
         'inputQty',
@@ -119,8 +118,7 @@ export const initialState = {
         'theoreticalDeltaPercentage',
         'theoreticalDeltaRefToken',
     ],
-    filteredFields: {
-    },
+    filteredFields: {},
     numericalOperators: ['=', '>', '>=', '<', '<=']
 }
 
@@ -168,25 +166,7 @@ export const scanDataSlice = createSlice({
             state.latestDataHasErrors = true;
         },
         getCombinedDataSuccess: (state, {payload}) => {
-            state.combinedData = payload.latestData;
-
-            let earliestTimestamp = new Date();
-
-            for(let swapSetArray of payload.latestData) {
-                const dateArray = swapSetArray[state.fields.timestamp.index];
-                const timestamp = new Date(...dateArray);
-                if( timestamp < earliestTimestamp) {
-                    earliestTimestamp = timestamp;
-                }
-            }
-
-            const aggregateData = payload.aggregateData[state.defaultCategoryFolder].filter((swapSetArray) => {
-                const dateArray = swapSetArray[state.fields.timestamp.index];
-                const timestamp = new Date(...dateArray);
-                return timestamp < earliestTimestamp;
-            });
-
-            state.combinedData.push(...aggregateData);
+            state.combinedData = payload;
 
             state.loading = false;
             state.hasErrors = false;
@@ -199,16 +179,44 @@ export const scanDataSlice = createSlice({
             state.sortingEnabled = !state.sortingEnabled;
         },
         sortedFieldChanged: (state, {payload}) => {
-            const sortedFieldsKeys = Object.keys(state.sortedFieldsDescending);
-
-            if(!sortedFieldsKeys.includes(payload)) {
-                state.sortedFieldsDescending[payload] = true;
-            } else if(state.sortedFieldsDescending[payload] === true) {
-                state.sortedFieldsDescending[payload] = false;
-            } else {
-                const { [payload]:value ,...rest} = state.sortedFieldsDescending;
-                state.sortedFieldsDescending = rest;
+            const checkSortedField = (field) => {
+                return field.name === payload
             }
+
+            const index = state.sortedFields.findIndex(checkSortedField)
+
+            const field = state.sortedFields[index]
+
+            if (!field.active) {
+                field.active = true
+                state.sortedFields = [field, ...state.sortedFields.filter((field, i) => {
+                    return i !== index
+                })]
+            } else if (field.descending) {
+                field.descending = false
+                state.sortedFields = [field, ...state.sortedFields.filter((field, i) => {
+                    return i !== index
+                })]                
+            } else {
+                field.active = false
+                field.descending = true
+            }
+
+            let fieldsSorted = false
+            let defaultFieldIndex
+            state.sortedFields.forEach((field, i) => {
+                if (field.name === state.filterableFields[0]) {
+                    defaultFieldIndex = i
+                }
+                if (field.active) {
+                    fieldsSorted = true
+                }
+            })
+
+            if (!fieldsSorted) {
+                state.sortedFields[defaultFieldIndex].active = true
+            }
+
         },
         filterChanged: (state, {payload}) => {
             if(payload.dateKey === undefined) {
@@ -220,32 +228,38 @@ export const scanDataSlice = createSlice({
         operatorChanged: (state, {payload}) => {
             state.filteredFields[payload.key].operator = payload.value;
         },
+        setSortedFields: (state) => {
+            state.tableFields.forEach((fieldName, index) => {
+                state.sortedFields.push({
+                    name: fieldName,
+                    active: index === 0 ? true : false,
+                    descending:true
+                })
+            })
+        },
         setFilteredFields: (state) => {
-            for(let fieldKey of state.filterableFields) {
-                const field = state.fields[fieldKey];
-                state.filteredFields[fieldKey] = {};
-                state.filteredFields[fieldKey].value = '';
+            for(let fieldName of state.filterableFields) {
+                const field = state.fields[fieldName];
+                state.filteredFields[fieldName] = {};
+                state.filteredFields[fieldName].value = '';
                 if(field.isNumerical) {
-                    state.filteredFields[fieldKey].operator = state.numericalOperators[0];
+                    state.filteredFields[fieldName].operator = state.numericalOperators[0];
                 }
                 if(field.isTimestamp) {
-                    state.filteredFields[fieldKey].dateFrom= '';
-                    state.filteredFields[fieldKey].dateUntil = '';
+                    state.filteredFields[fieldName].dateFrom= '';
+                    state.filteredFields[fieldName].dateUntil = '';
                 }
             }
         },
-        bestSwapSetsRetrieved: (state) => {
+        bestSwapSetsRetrieved: (state, {payload}) => {
             for (let i = 0; i < state.bestSwapSets.length; i += 1) {
                 const swapSetParams = state.bestSwapSets[i];
                 for (let categoryKey in swapSetParams.swapSetCategories) {
-                    state.bestSwapSets[i].swapSetCategories[categoryKey] = getBestSwapSetByPeriod(
-                        state.combinedData,
-                        swapSetParams.timespanHours,
-                        state.fields.timestamp.index,
-                        state.fields[categoryKey].index,
-                    )
+                    state.bestSwapSets[i].swapSetCategories[categoryKey] = payload[i]
                 }
             }
+            state.loading = false;
+            state.hasErrors = false;
         }
     }
 });
@@ -266,6 +280,7 @@ export const {
     sortedFieldChanged,
     filterChanged,
     operatorChanged,
+    setSortedFields,
     setFilteredFields,
     bestSwapSetsRetrieved
 } = scanDataSlice.actions;
@@ -292,10 +307,82 @@ export default scanDataSlice.reducer;
 
 // export asynchronous thunk action
 
+export function fetchBestSwapSets(blockchain, bestSwapSets) {
+    return async (dispatch) => {
+        try {
+            const retrievedSwapSets = []
+
+            for(let bestSwapSet of bestSwapSets) {
+                let fromTimestamp = new Date();
+    
+                const hoursAgo = bestSwapSet.timespanHours
+    
+                if (hoursAgo !== undefined) {
+                    fromTimestamp.setHours(fromTimestamp.getHours() - hoursAgo );
+                } else {
+                    fromTimestamp = new Date(0)
+                }
+    
+               const dateArray = [
+                fromTimestamp.getFullYear(),
+                fromTimestamp.getMonth(),
+                fromTimestamp.getDate(),
+                fromTimestamp.getHours(),
+                fromTimestamp.getMinutes(),
+                fromTimestamp.getSeconds()
+               ]   
+    
+                const response = await fetch(`/get-top-aggregate/${blockchain}/${dateArray.join('-')}/theoreticalPercentageRefToken/ASC`);
+                const swapSet = await response.json();
+
+                if (swapSet === undefined) {
+                    throw('Undefined swapSet')
+                }
+    
+                retrievedSwapSets.push(swapSet)
+            }
+            dispatch(bestSwapSetsRetrieved(retrievedSwapSets))
+        } catch(error) {
+            console.log(error);
+            dispatch(getCombinedDataFailure()); 
+        } 
+    }
+}
+
+export function fetchListSwapSets(blockchain, sortedFields) {
+    return async (dispatch) => {
+        try {
+            const sortedFieldsArray = []
+            const descendingArray = []
+
+            sortedFields.forEach(sortedField => {
+                if (sortedField.active) {
+                    sortedFieldsArray.push(sortedField.name)
+                    const orderValue = sortedField.descending ? -1 : 1
+                    descendingArray.push(orderValue)
+                }
+            })
+
+            const response = await fetch(`/get-list/${blockchain}/${sortedFieldsArray.join('&')}/${descendingArray.join('&')}`);
+            const retrievedSwapSets = await response.json();    
+            dispatch(getCombinedDataSuccess(retrievedSwapSets));
+        } catch(error) {
+            console.log(error);
+            dispatch(getCombinedDataFailure()); 
+        }
+    }
+}
+
+export function initFields() {
+    return async (dispatch) => {
+        dispatch(setSortedFields())
+        dispatch(setFilteredFields());
+    }
+}
+
+
 export function fetchScans(blockchainSelection) {
     return async (dispatch) => {
-        dispatch(setFilteredFields());
-
         dispatch(getScanData());
 
         try {

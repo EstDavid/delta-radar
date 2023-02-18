@@ -1,10 +1,24 @@
-import React  from 'react';
+import React, { useEffect }  from 'react';
 import { useParams, Link } from 'react-router-dom';
 import Navbar from '../components/Navbar';
 import ScanTable from '../components/ScanTable';
 import FiltersSidebar from '../components/FiltersSidebar';
+import { useDispatch, useSelector } from 'react-redux';
+import { fetchListSwapSets, scanDataSelector } from '../slices/scanData';
 
 function TablePage() {
+  const dispatch = useDispatch()
+
+  const {
+    blockchainSelection,
+    sortedFields,
+} = useSelector(scanDataSelector);
+
+useEffect(() => {
+  dispatch(fetchListSwapSets(blockchainSelection, sortedFields));
+
+}, [blockchainSelection, sortedFields]);
+
   return (
     <div className="App">
       <Navbar />

@@ -92,7 +92,7 @@ export function requestBlockchain(provider, chainParams) {
                     },
                   ],
                 );
-              } catch (addError) {
+              } catch (error) {
                 console.log(error);
               }
             }
