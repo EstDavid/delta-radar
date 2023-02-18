@@ -43,8 +43,8 @@ const Navbar = () => {
             </li>
             <li className="nav-item">
               <NavLink
-                to="/Tables" className={({ isActive }) => (isActive ? 'nav-link active' : 'nav-link inactive')}
-              >Tables</NavLink>
+                to="/BestDeltas" className={({ isActive }) => (isActive ? 'nav-link active' : 'nav-link inactive')}
+              >Best Deltas</NavLink>
             </li>
           </ul>
 

@@ -25,8 +25,8 @@ function App() {
 
   return (
     <Routes>
-      <Route path="/" element={<HomePage />} />
-      <Route path="/Tables" element={<TablePage />} />
+      <Route path="/BestDeltas" element={<HomePage />} />
+      <Route path="/" element={<TablePage />} />
     </Routes>
   );
 }
