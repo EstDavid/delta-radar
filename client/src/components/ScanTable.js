@@ -7,6 +7,7 @@ import {
 } from '../slices/scanData';
 import {sortDataByFields, filterDataByFields, pretifyNumber } from '../helpers/helpers';
 import { TokenSequence, ExchangeSequence } from '../helpers/helperComponents';
+import FetchingData from "./FetchingData";
 
 const TableHeader = (props) => {
 
@@ -141,12 +142,7 @@ const ScanTable = () => {
 
   const renderChart = () => {
     if(loading) return (
-      <div className="d-flex w-100 align-items-center justify-content-between p-2">
-        <div className="spinner-border text-secondary" role="status">
-          <span className="visually-hidden">Loading...</span>
-        </div>        
-      </div>
-
+      <FetchingData />
     )
     if(hasErrors) return <p>Unable to display data</p>
 

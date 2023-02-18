@@ -309,6 +309,8 @@ export default scanDataSlice.reducer;
 
 export function fetchBestSwapSets(blockchain, bestSwapSets) {
     return async (dispatch) => {
+        dispatch(getScanData());
+
         try {
             const retrievedSwapSets = []
 
