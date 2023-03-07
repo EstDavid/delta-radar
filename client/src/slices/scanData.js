@@ -334,7 +334,7 @@ export function fetchBestSwapSets(blockchain, bestSwapSets) {
                 fromTimestamp.getSeconds()
                ]   
     
-                const response = await fetch(`/get-top-aggregate/${blockchain}/${dateArray.join('-')}/theoreticalPercentageRefToken/ASC`);
+                const response = await fetch(`/get-top-aggregate/${blockchain}/${dateArray.join('-')}/theoreticalDeltaRefToken/DESC`);
                 const swapSet = await response.json();
 
                 if (swapSet === undefined) {

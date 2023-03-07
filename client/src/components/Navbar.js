@@ -13,7 +13,9 @@ const Navbar = () => {
 
   const handleBlockchainChange = (event) => {
     const blockchainKey = event.target.firstChild.nodeValue;
-    if(blockchainSelection !== blockchainKey) dispatch(switchBlockchain(blockchainKey));
+    if(blockchainSelection !== blockchainKey) {
+      dispatch(switchBlockchain(blockchainKey))
+    };
   }
 
   return (

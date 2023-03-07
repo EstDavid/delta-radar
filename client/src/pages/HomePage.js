@@ -9,7 +9,18 @@ import {
 import FetchingData from '../components/FetchingData';
 
 function HomePage() {
-    const { loading, bestSwapSets } = useSelector(scanDataSelector)
+    const dispatch = useDispatch()
+
+    const { 
+        loading, 
+        blockchainSelection,
+        bestSwapSets 
+    } = useSelector(scanDataSelector)
+
+    useEffect(() => {
+        dispatch(fetchBestSwapSets(blockchainSelection, bestSwapSets));
+      
+    }, [blockchainSelection]);
 
     return (
         <div className="App">
@@ -18,9 +29,8 @@ function HomePage() {
                 {loading ? (
                     <FetchingData />
                 ) : (
-                    <div className="row">
-                        <div className="col-md-2"></div>
-                        <div className="col-12 col-md-8 gy-2">
+                    <div className="row d-flex justify-content-center">
+                        <div className="col-12 col-xl-10 gy-2">
                             <div className="row row-cols-1 row-cols-lg-2 g-4">
                                 {bestSwapSets.map((swapSet, index) => {
                                     return (

@@ -44,9 +44,9 @@ const DeltaBadge = (props) => {
                         <div>
                             <div className="d-flex my-2 align-items-center">
                                 <h4><span className="badge bg-primary me-2">Date:</span></h4>
-                                <p className="card-text">{timestamp.toLocaleString() + ' :'}</p>
-                            </div>    
-                            <div className="d-flex my-2 align-items-center flex-wrap">
+                                <p className="card-text">{new Date(timestamp).toLocaleString()}</p>
+                            </div>
+                            <div className="row row-cols-1 row-cols-md-2 row-cols-lg-1 row-cols-xl-auto my-2 align-items-center">
                                 <h4><span className="badge bg-primary me-2">Token Sequence:</span></h4>
                                 <TokenSequence
                                     color="white"
@@ -55,7 +55,7 @@ const DeltaBadge = (props) => {
                                     scannerDomain={scannerDomain} 
                                 />
                             </div>
-                            <div className="d-flex my-2 align-items-center flex-wrap">
+                            <div className="row row-cols-1 row-cols-md-2 row-cols-lg-1 row-cols-xl-auto my-2 align-items-center">
                                 <h4><span className="badge bg-primary me-2">Exchange Sequence:</span></h4>
                                 <ExchangeSequence color="white" exchangeArray={exchangeSequence} />
                             </div>
